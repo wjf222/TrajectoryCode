@@ -19,5 +19,4 @@ public class TracingPoint {
     // 时间
     public long date;
 
-
 }
