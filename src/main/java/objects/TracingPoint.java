@@ -4,12 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @AllArgsConstructor
 @Builder
-public class TracingPoint extends Object{
+public class TracingPoint implements Serializable {
     // 轨迹编号
     public int id;
     // 经度

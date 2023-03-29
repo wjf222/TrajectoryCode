@@ -1,5 +1,7 @@
 package indexs;
 
+import util.Pretreatment;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -125,12 +127,7 @@ public class GeoHash {
      * @return 二进制编码
      */
     public static String getBinary(double lon, double lat, int precision) {
-        if (lon <= MIN_LONGTITUDE || lon >= MAX_LONGTITUDE) {
-            throw new IllegalArgumentException(String.format("经度取值范围为(%f, %f)", MIN_LONGTITUDE, MAX_LONGTITUDE));
-        }
-        if (lat <= MIN_LATITUDE || lat >= MAX_LATITUDE) {
-            throw new IllegalArgumentException(String.format("纬度取值范围为(%f, %f)", MIN_LATITUDE, MAX_LATITUDE));
-        }
+        Pretreatment.positionRange(lon,lat);
         if ((precision << 1) > MAX_BINARY_BITS) {
             throw new IllegalArgumentException("精度最长为32位");
         }
