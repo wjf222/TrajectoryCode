@@ -1,24 +1,28 @@
+import data.TrajectorySink;
 import indexs.GeoHash;
 import objects.TracingPoint;
 import org.apache.flink.api.common.eventtime.*;
 import org.apache.flink.api.common.functions.FilterFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.common.state.MapState;
+import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.connector.kafka.source.KafkaSource;
-import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
-import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.RichWindowFunction;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
-import service.DTW;
+import service.ClosestPairDistance;
 import service.LCSS;
 import service.Similarity;
 import util.Pretreatment;
@@ -28,14 +32,21 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.*;
 
+import static data.TrajectorySource.textStream;
+
 public class Main {
-    private static final String input_topic_name = "trajectory";
-    private static final String bootStrapServers = "192.168.245.217:9092";
-    private static final String GroupName = "wjf";
-    private static final String SourceName = "TrajectorySource";
     private static final int WindowSize = 1;
     private static final int SlideStep = 15;
+    private static final int Parallelism = 8;
+    private static TracingPoint[] source = new TracingPoint[5];
+    static {
 
+        source[0] = TracingPoint.builder().id(0).longitude(116.28149).latitude(39.91596).build();
+        source[1] = TracingPoint.builder().id(0).longitude(116.27739).latitude(39.91267).build();
+        source[2] = TracingPoint.builder().id(0).longitude(116.27712).latitude(39.91684).build();
+        source[3] = TracingPoint.builder().id(0).longitude(116.28909).latitude(39.91758).build();
+        source[4] = TracingPoint.builder().id(0).longitude(116.29604).latitude(39.91197).build();
+    }
     public static void main(String[] args) throws Exception {
         // 默认时间语义
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -65,29 +76,22 @@ public class Main {
                     .longitude(Double.parseDouble(s[2]))
                     .latitude(Double.parseDouble(s[3])).build();
             return tracingPoint;
-        });
-        TracingPoint[] source = new TracingPoint[5];
-        source[0] = TracingPoint.builder().id(0).longitude(116.28149).latitude(39.91596).build();
-        source[1] = TracingPoint.builder().id(0).longitude(116.27739).latitude(39.91267).build();
-        source[2] = TracingPoint.builder().id(0).longitude(116.27712).latitude(39.91684).build();
-        source[3] = TracingPoint.builder().id(0).longitude(116.28909).latitude(39.91758).build();
-        source[4] = TracingPoint.builder().id(0).longitude(116.29604).latitude(39.91197).build();
-        SingleOutputStreamOperator<Double> apply = tracingPointStream
-                .filter((FilterFunction<TracingPoint>) value -> {
-                    try {
-                        Pretreatment.positionRange(value);
-                    } catch (Exception e){
-                        e.printStackTrace();
-                        return false;
-                    }
-                    return true;
-                })
-                .keyBy((KeySelector<TracingPoint, String>) tracingPoint -> GeoHash.getBinary(tracingPoint.getLongitude(), tracingPoint.getLatitude(), 13))
-                .window(SlidingEventTimeWindows.of(Time.hours(WindowSize), Time.minutes(SlideStep)))
-                .apply(new WindowFunction<TracingPoint, Double, String, TimeWindow>() {
+        }).filter((FilterFunction<TracingPoint>) Pretreatment::positionRange);
+        KeyedStream<TracingPoint, String> tracingPointStringKeyedStream = tracingPointStream
+                .keyBy((KeySelector<TracingPoint, String>) tracingPoint -> GeoHash.getBinary(tracingPoint.getLongitude(), tracingPoint.getLatitude(), 13));
+//        DataStream<String> apply = slidingWindowDeal(tracingPointStringKeyedStream);
+        DataStream<String> apply = tumblingWindowDeal(tracingPointStringKeyedStream);
+        Sink<String> sink = TrajectorySink.createKafkaSink();
+        apply.sinkTo(sink);
+        env.execute("Wjf Flink");
+    }
+
+    public static DataStream<String> slidingWindowDeal(KeyedStream<TracingPoint,String> keyedStream) {
+        return keyedStream.window(SlidingEventTimeWindows.of(Time.hours(WindowSize), Time.minutes(SlideStep)))
+                .apply(new WindowFunction<TracingPoint, String, String, TimeWindow>() {
                     @Override
-                    public void apply(String s, TimeWindow timeWindow, Iterable<TracingPoint> iterable, Collector<Double> collector) {
-                        Similarity op = new LCSS();
+                    public void apply(String s, TimeWindow timeWindow, Iterable<TracingPoint> iterable, Collector<String> collector) {
+                        Similarity op = new ClosestPairDistance();
                         Map<Integer, ArrayList<TracingPoint>> map = new HashMap<>();
                         for(TracingPoint t:iterable){
                             ArrayList<TracingPoint> traj = map.getOrDefault(t.id,new ArrayList<>());
@@ -95,42 +99,41 @@ public class Main {
                             map.put(t.id,traj);
                         }
                         for(ArrayList<TracingPoint> trajectory:map.values()){
-                            double val = op.compute(trajectory.toArray(new TracingPoint[0]),source);
-                            op.compute(trajectory.toArray(new TracingPoint[0]),source);
-                            op.compute(trajectory.toArray(new TracingPoint[0]),source);
-                            op.compute(trajectory.toArray(new TracingPoint[0]),source);
-                            op.compute(trajectory.toArray(new TracingPoint[0]),source);
-                            collector.collect(val);
+                            double val = op.compute(source,trajectory.toArray(new TracingPoint[0]));
+                            op.compute(source,trajectory.toArray(new TracingPoint[0]));
+                            op.compute(source,trajectory.toArray(new TracingPoint[0]));
+                            op.compute(source,trajectory.toArray(new TracingPoint[0]));
+                            op.compute(source,trajectory.toArray(new TracingPoint[0]));
+                            collector.collect(val+"");
                         }
                     }
-                }).setParallelism(8);
-        apply.print().setParallelism(8);
-
-        env.execute("Wjf Flink");
+                }).setParallelism(Parallelism);
     }
 
-    public static DataStream<String> textStream(StreamExecutionEnvironment env, String filpath) {
-        if (Objects.equals(filpath, "")) {
-            filpath = "D:\\wjf\\graduatestudent\\TrajectoryCode\\src\\main\\resources\\data-sorted.txt";
-        }
-        DataStreamSource<String> stream = env.readTextFile(filpath);
-        return stream;
-    }
-
-    public static DataStream<String> kafkaStream(StreamExecutionEnvironment env) {
-        // 设置事件时间
-        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-        KafkaSource<String> source = KafkaSource.<String>builder()
-                .setBootstrapServers(bootStrapServers)
-                .setTopics(input_topic_name)
-                .setGroupId(GroupName)
-                .setStartingOffsets(OffsetsInitializer.earliest())
-                .setValueOnlyDeserializer(new SimpleStringSchema())
-                .build();
-
-        DataStreamSource<String> Stream = env.fromSource(source, WatermarkStrategy
-                .<String>forBoundedOutOfOrderness(Duration.ofHours(1))
-                .withTimestampAssigner((event, timestamp) -> Long.parseLong(event.split(",")[1])), SourceName);
-        return Stream;
+    public static DataStream<String> tumblingWindowDeal(KeyedStream<TracingPoint,String> keyedStream) {
+        return keyedStream.window(TumblingEventTimeWindows.of(Time.minutes(SlideStep)))
+                .apply(new RichWindowFunction<TracingPoint, String, String, TimeWindow>() {
+                    private transient MapState<Integer, ClosestPairDistance> trajectoriesMap;
+                    @Override
+                    public void open(Configuration parameters) throws Exception {
+                        MapStateDescriptor<Integer, ClosestPairDistance> descriptor = new MapStateDescriptor<Integer, ClosestPairDistance>(
+                            "", Types.INT,Types.GENERIC(ClosestPairDistance.class));
+                        trajectoriesMap = getRuntimeContext().getMapState(descriptor);
+                    }
+                    @Override
+                    public void apply(String s, TimeWindow window, Iterable<TracingPoint> input, Collector<String> out) throws Exception {
+                        for(TracingPoint t:input){
+                            if(!trajectoriesMap.contains(t.id)){
+                               trajectoriesMap.put(t.id,new ClosestPairDistance(source));
+                            }
+                            ClosestPairDistance similarity = trajectoriesMap.get(t.id);
+                            similarity.incrementCompute(t);
+                            similarity.incrementCompute(t);
+                            similarity.incrementCompute(t);
+                            similarity.incrementCompute(t);
+                            out.collect(similarity.incrementCompute(t)+"");
+                        }
+                    }
+                }).setParallelism(Parallelism);
     }
 }

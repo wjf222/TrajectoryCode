@@ -3,7 +3,6 @@ package service;
 import objects.TracingPoint;
 import util.PointTool;
 
-import java.util.Arrays;
 
 public class DTW implements Similarity{
     public double oneDimensional(double[] p1, double[] p2) {
@@ -56,9 +55,6 @@ public class DTW implements Similarity{
                 }
             }
         }
-//        System.out.println("损失矩阵M:");
-//        System.out.println(Arrays.deepToString(MC).replaceAll("],", "]," + System.getProperty("line.separator")));
-//        System.out.println("序列距离:" + MC[r - 1][c - 1]);
         return MC[r - 1][c - 1];
     }
 }
