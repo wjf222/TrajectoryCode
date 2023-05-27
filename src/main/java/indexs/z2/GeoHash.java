@@ -1,4 +1,4 @@
-package indexs;
+package indexs.z2;
 
 import util.Pretreatment;
 

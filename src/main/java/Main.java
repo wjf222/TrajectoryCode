@@ -1,16 +1,13 @@
 import data.TrajectorySink;
-import indexs.GeoHash;
+import indexs.z2.GeoHash;
 import objects.TracingPoint;
 import org.apache.flink.api.common.eventtime.*;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
-import org.apache.flink.api.common.typeinfo.TypeHint;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
@@ -23,7 +20,6 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import service.ClosestPairDistance;
-import service.LCSS;
 import service.Similarity;
 import util.Pretreatment;
 
@@ -37,7 +33,7 @@ import static data.TrajectorySource.textStream;
 public class Main {
     private static final int WindowSize = 1;
     private static final int SlideStep = 15;
-    private static final int Parallelism = 8;
+    private static final int Parallelism = 2;
     private static TracingPoint[] source = new TracingPoint[5];
     static {
 
@@ -116,8 +112,8 @@ public class Main {
                     private transient MapState<Integer, ClosestPairDistance> trajectoriesMap;
                     @Override
                     public void open(Configuration parameters) throws Exception {
-                        MapStateDescriptor<Integer, ClosestPairDistance> descriptor = new MapStateDescriptor<Integer, ClosestPairDistance>(
-                            "", Types.INT,Types.GENERIC(ClosestPairDistance.class));
+                        MapStateDescriptor<Integer, ClosestPairDistance> descriptor = new MapStateDescriptor<>(
+                                "", Types.INT, Types.GENERIC(ClosestPairDistance.class));
                         trajectoriesMap = getRuntimeContext().getMapState(descriptor);
                     }
                     @Override
