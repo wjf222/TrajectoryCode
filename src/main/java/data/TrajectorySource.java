@@ -34,7 +34,7 @@ public class TrajectorySource {
     }
     public static DataStream<String> textStream(StreamExecutionEnvironment env, String filpath) {
         if (Objects.equals(filpath, "")) {
-            filpath = "D:\\wjf\\graduatestudent\\TrajectoryCode\\src\\main\\resources\\data-sorted.txt";
+            filpath = "D:\\opensource\\wjf\\TrajectoryCode\\src\\main\\resources\\data-sorted.txt";
         }
         DataStreamSource<String> stream = env.readTextFile(filpath);
         return stream;

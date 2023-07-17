@@ -75,10 +75,10 @@ public class Main {
         }).filter((FilterFunction<TracingPoint>) Pretreatment::positionRange);
         KeyedStream<TracingPoint, String> tracingPointStringKeyedStream = tracingPointStream
                 .keyBy((KeySelector<TracingPoint, String>) tracingPoint -> GeoHash.getBinary(tracingPoint.getLongitude(), tracingPoint.getLatitude(), 13));
-//        DataStream<String> apply = slidingWindowDeal(tracingPointStringKeyedStream);
         DataStream<String> apply = tumblingWindowDeal(tracingPointStringKeyedStream);
-        Sink<String> sink = TrajectorySink.createKafkaSink();
-        apply.sinkTo(sink);
+//        Sink<String> sink = TrajectorySink.createKafkaSink();
+//        apply.sinkTo(sink);
+        apply.writeAsText("D:\\temp-candeleted\\a");
         env.execute("Wjf Flink");
     }
 
