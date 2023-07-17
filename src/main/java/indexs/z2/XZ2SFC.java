@@ -356,7 +356,5 @@ public class XZ2SFC {
             return ans;
 
         }
-
-        public class IndexRangeIsOrdered implements
     }
 }
