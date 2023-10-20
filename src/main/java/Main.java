@@ -1,5 +1,5 @@
 import indexs.z2.GeoHash;
-import objects.TracingPoint;
+import pojo.TracingPoint;
 import org.apache.flink.api.common.eventtime.*;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.state.MapState;
@@ -17,8 +17,8 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
-import service.ClosestPairDistance;
-import service.Similarity;
+import service.similarity.ClosestPairDistance;
+import service.similarity.Similarity;
 import util.Pretreatment;
 
 import java.text.ParseException;

@@ -1,9 +1,9 @@
-package service;
+package service.similarity;
 
-import objects.TracingPoint;
+import pojo.TracingPoint;
 import util.PointTool;
 
-public class EDR implements Similarity{
+public class EDR implements Similarity {
     @Override
     public double compute(TracingPoint[] first, TracingPoint[] second) {
         int m = first.length;

@@ -1,12 +1,12 @@
-package service;
+package service.similarity;
 
-import objects.TracingPoint;
+import pojo.TracingPoint;
 import util.PointTool;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ERP implements Similarity{
+public class ERP implements Similarity {
 
     private TracingPoint gap;
     @Override
@@ -34,7 +34,7 @@ public class ERP implements Similarity{
         }
         for(int i = 1; i <= m; i++) {
             TracingPoint pointA = first[i - 1];
-            for(int j = 1; j < n;j++) {
+            for(int j = 1; j <= n;j++) {
                 TracingPoint pointB = second[j - 1];
                 dp[i][j] = Math.min(dp[i-1][j-1]+PointTool.getDistance(pointA, pointB),
                         Math.min(dp[i-1][j]+mapGapDist.get(pointA),dp[i][j-1]+mapGapDist.get(pointB)));

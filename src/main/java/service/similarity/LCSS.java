@@ -1,14 +1,11 @@
-package service;
+package service.similarity;
 
 import lombok.extern.slf4j.Slf4j;
-import objects.TracingPoint;
-import org.locationtech.jts.geom.Coordinate;
+import pojo.TracingPoint;
 import util.PointTool;
 
-import java.util.ArrayList;
-
 @Slf4j
-public class LCSS implements Similarity{
+public class LCSS implements Similarity {
     @Override
     public double compute(TracingPoint[] first, TracingPoint[] second) {
         int la = first.length;

@@ -1,7 +1,4 @@
-package objects;
-
-import java.util.ArrayDeque;
-import java.util.Deque;
+package pojo;
 
 /**
  * 存储轨迹点的循环队列

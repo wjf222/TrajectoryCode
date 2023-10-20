@@ -1,6 +1,6 @@
-package service;
+package service.similarity;
 
-import objects.TracingPoint;
+import pojo.TracingPoint;
 
 public interface Similarity {
     double compute(TracingPoint[] first, TracingPoint[] second) ;
