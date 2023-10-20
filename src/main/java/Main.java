@@ -1,4 +1,3 @@
-import data.TrajectorySink;
 import indexs.z2.GeoHash;
 import objects.TracingPoint;
 import org.apache.flink.api.common.eventtime.*;
@@ -6,7 +5,6 @@ import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -36,7 +34,6 @@ public class Main {
     private static final int Parallelism = 2;
     private static TracingPoint[] source = new TracingPoint[5];
     static {
-
         source[0] = TracingPoint.builder().id(0).longitude(116.28149).latitude(39.91596).build();
         source[1] = TracingPoint.builder().id(0).longitude(116.27739).latitude(39.91267).build();
         source[2] = TracingPoint.builder().id(0).longitude(116.27712).latitude(39.91684).build();
@@ -76,8 +73,6 @@ public class Main {
         KeyedStream<TracingPoint, String> tracingPointStringKeyedStream = tracingPointStream
                 .keyBy((KeySelector<TracingPoint, String>) tracingPoint -> GeoHash.getBinary(tracingPoint.getLongitude(), tracingPoint.getLatitude(), 13));
         DataStream<String> apply = tumblingWindowDeal(tracingPointStringKeyedStream);
-//        Sink<String> sink = TrajectorySink.createKafkaSink();
-//        apply.sinkTo(sink);
         apply.writeAsText("D:\\temp-candeleted\\a");
         env.execute("Wjf Flink");
     }

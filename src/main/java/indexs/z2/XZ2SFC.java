@@ -14,6 +14,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 空间扩展填充Z曲线  XZ2 : 用户存储线线、面数据
@@ -86,7 +88,7 @@ public class XZ2SFC {
         if(l1 < resolution) {
             // 元素在l2分辨率下的宽度
             double w2 = Math.pow(0.5,l1+1);
-            // 检查多边形与多少个轴香蕉
+            // 检查多边形与多少个轴相交
             boolean pre_x = normal_bound.xHi <= ((Math.floor(normal_bound.xLo / w2) * w2) + (2 * w2));
             boolean pre_y = normal_bound.yHi <= ((Math.floor(normal_bound.yLo / w2) * w2) + (2 * w2));
             length = pre_y&&pre_x?l1+1:l1;
@@ -133,10 +135,10 @@ public class XZ2SFC {
      * @return
      */
     public List<IndexRange> ranges(List<Window> queries, Optional<Integer> maxRanges){
-        QueryWindow[] QueryWindow = (indexs.commons.QueryWindow[]) queries.stream().map(query -> {
+        QueryWindow[] QueryWindow = queries.stream().map(query -> {
             Bounding bounding = normalize(query.getXmin(), query.getYmin(), query.getXmax(), query.getYmax());
             return new QueryWindow(bounding.xLo, bounding.yLo, bounding.yHi, bounding.yHi);
-        }).toArray();
+        }).toArray(indexs.commons.QueryWindow[]::new);
         return ranges(QueryWindow,maxRanges.orElse(Integer.MAX_VALUE));
     }
 
@@ -157,7 +159,7 @@ public class XZ2SFC {
         short level = 1;
         while (level < resolution && !remaining.isEmpty() && ranges.size() < rangeStop) {
             XElement next = remaining.poll();
-            if (next.equals(next)) {
+            if (next.equals(LevelTerminator)) {
                 // 当前level处理完毕
                 if(!remaining.isEmpty()) {
                     level = (short) (level+ 1);
@@ -233,13 +235,11 @@ public class XZ2SFC {
     }
     private Tuple2<Long, Long> sequenceInterval(double x, double y, short length, boolean partial) {
         long min = sequenceCode(x, y, length);
-        Double d = new Double(Math.pow(4,resolution-length+1));
-        long max = partial?min:(min+d.longValue()-1L)/3L;
+        long max = min + (Double.valueOf(Math.pow(4, resolution - length + 1)).longValue() - 1L)/3L;
+        max = partial?min:max;
         return new Tuple2<>(min, max);
     }
-//    private void checkValue(XElement quad,short level,List<QueryWindow> windows) {
-//
-//    }
+
     /**
      * 一个包含了坐标边界的包围盒
      */
