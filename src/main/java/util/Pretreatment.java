@@ -1,6 +1,6 @@
 package util;
 
-import pojo.TracingPoint;
+import entity.TracingPoint;
 
 public class Pretreatment {
     /**
@@ -30,12 +30,10 @@ public class Pretreatment {
     }
     public static boolean positionRange(double lon,double lat) {
         if (lon <= MIN_LONGTITUDE || lon >= MAX_LONGTITUDE) {
-//            throw new IllegalArgumentException(String.format("经度取值范围为(%f, %f),输入为(%f)", MIN_LONGTITUDE, MAX_LONGTITUDE,lon));
-            return false;
+            throw new IllegalArgumentException(String.format("经度取值范围为(%f, %f),输入为(%f)", MIN_LONGTITUDE, MAX_LONGTITUDE,lon));
         }
         if (lat <= MIN_LATITUDE || lat >= MAX_LATITUDE) {
-//            throw new IllegalArgumentException(String.format("纬度取值范围为(%f, %f)", MIN_LATITUDE, MAX_LATITUDE));
-            return false;
+            throw new IllegalArgumentException(String.format("纬度取值范围为(%f, %f)", MIN_LATITUDE, MAX_LATITUDE));
         }
         return true;
     }

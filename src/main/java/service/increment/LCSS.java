@@ -1,6 +1,6 @@
 package service.increment;
 
-import pojo.TracingPoint;
+import entity.TracingPoint;
 import util.PointTool;
 
 public class LCSS implements IncrementSimilarity{

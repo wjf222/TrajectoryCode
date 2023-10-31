@@ -1,19 +1,32 @@
-package pojo;
+package entity;
+
+import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * 存储轨迹点的循环队列
  */
-public class TracingQueue {
-    TracingPoint[] queueArray;
+@Data
+public class TracingQueue implements Serializable {
+    public TracingPoint[] queueArray;
+    public long id = -1;
     int front;
     int rear;
-    int maxQueueSize;
-    public TracingQueue(int maxSize) {
+    long maxQueueSize;
+    public TracingQueue(){}
+    public TracingQueue(long maxSize) {
         this.maxQueueSize = maxSize;
-        this.queueArray = new TracingPoint[maxSize];
+        this.queueArray = new TracingPoint[(int)maxSize];
         this.front = 0;
         this.rear = 0;
     }
+
+    /**
+     * 添加元素
+     * @param point 待添加点
+     * @return 元素位置
+     */
     public int EnCircularQueue(TracingPoint point){
         if ((rear + 1) % maxQueueSize == front){
             return -1;
@@ -21,15 +34,19 @@ public class TracingQueue {
         queueArray[rear] = point;
         int ans = rear;
         //循环队列在rear指针时，如果只是简单累加，很可能会出现空指针异常
-        rear = (rear + 1) % maxQueueSize;
+        rear = (int) ((rear + 1) % maxQueueSize);
         return ans;
     }
 
+    /**
+     * 删除元素
+     * @return 元素位置
+     */
     public int DeCircularQueue (){
         //满足front = rear时，说明队列为空
         if (front == rear){return -1;}
         Integer ans = front;
-        front = (front + 1) % maxQueueSize;
+        front = (int) ((front + 1) % maxQueueSize);
         return ans;
     }
     public boolean isFull(){

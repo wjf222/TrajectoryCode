@@ -1,8 +1,8 @@
 package service.increment;
 
 import org.apache.commons.math3.util.Pair;
-import pojo.TracingPoint;
-import pojo.TracingQueue;
+import entity.TracingPoint;
+import entity.TracingQueue;
 import util.PointTool;
 
 import java.util.Deque;

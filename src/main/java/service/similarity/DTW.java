@@ -1,6 +1,6 @@
 package service.similarity;
 
-import pojo.TracingPoint;
+import entity.TracingPoint;
 import util.PointTool;
 
 

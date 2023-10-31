@@ -32,11 +32,4 @@ public class TrajectorySource {
                 .withTimestampAssigner((event, timestamp) -> Long.parseLong(event.split(",")[1])), SourceName);
         return Stream;
     }
-    public static DataStream<String> textStream(StreamExecutionEnvironment env, String filpath) {
-        if (Objects.equals(filpath, "")) {
-            filpath = "D:\\opensource\\wjf\\TrajectoryCode\\src\\main\\resources\\data-sorted.txt";
-        }
-        DataStreamSource<String> stream = env.readTextFile(filpath);
-        return stream;
-    }
 }

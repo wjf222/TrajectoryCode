@@ -1,6 +1,6 @@
 package util;
 
-import pojo.TracingPoint;
+import entity.TracingPoint;
 
 public class PointTool {
     /**
@@ -25,12 +25,9 @@ public class PointTool {
     public static double getDistance(double lon1,double lat1,double lon2, double lat2) {
         double radLat1 = rad(lat1);
         double radLat2 = rad(lat2);
-        double a = radLat1 - radLat2;
-        double b = rad(lon1) - rad(lon2);
-        double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) + Math.cos(radLat1) * Math.cos(radLat2) * Math.pow(Math.sin(b / 2), 2)));
-        s = s * EARTH_RADIUS;
-        s = Math.round(s * 10000) / 10000;
-        return s;
+        double sa2 = Math.sin((radLat1 - radLat2) / 2.0);
+        double sb2 = Math.sin(((lon1 - lon2) * Math.PI / 180.0) / 2.0);
+        return 2 * EARTH_RADIUS * Math.asin(Math.sqrt(sa2 * sa2 + Math.cos(lat1) * Math.cos(lat2) * sb2 * sb2));
     }
 
     public static double getDistance(TracingPoint p1,TracingPoint p2) {

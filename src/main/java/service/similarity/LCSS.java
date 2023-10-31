@@ -1,11 +1,19 @@
 package service.similarity;
 
 import lombok.extern.slf4j.Slf4j;
-import pojo.TracingPoint;
+import entity.TracingPoint;
 import util.PointTool;
+
+import java.io.Serializable;
 
 @Slf4j
 public class LCSS implements Similarity {
+    public double threshold;
+    public int delta;
+    public LCSS(double threshold, int delta) {
+        this.threshold = threshold;
+        this.delta = delta;
+    }
     @Override
     public double compute(TracingPoint[] first, TracingPoint[] second) {
         int la = first.length;

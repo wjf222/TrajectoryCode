@@ -1,4 +1,4 @@
-package pojo;
+package entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,11 +7,9 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-@AllArgsConstructor
-@Builder
 public class TracingPoint implements Serializable {
     // 轨迹编号
-    public int id;
+    public long id;
     // 经度
     public double longitude;
     // 纬度
@@ -19,6 +17,13 @@ public class TracingPoint implements Serializable {
     // 时间
     public long date;
 
+    public TracingPoint(){}
+    public TracingPoint(double longitude, double latitude, long date, long id) {
+        this.longitude = longitude;
+        this.latitude = latitude;
+        this.date = date;
+        this.id = id;
+    }
     @Override
     public int hashCode(){
         return 0;

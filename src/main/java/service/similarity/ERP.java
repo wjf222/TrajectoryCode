@@ -1,6 +1,6 @@
 package service.similarity;
 
-import pojo.TracingPoint;
+import entity.TracingPoint;
 import util.PointTool;
 
 import java.util.HashMap;
@@ -9,6 +9,10 @@ import java.util.Map;
 public class ERP implements Similarity {
 
     private TracingPoint gap;
+
+    public ERP(TracingPoint gap){
+        this.gap = gap;
+    }
     @Override
     public double compute(TracingPoint[] first, TracingPoint[] second) {
         Map<TracingPoint,Double> mapGapDist = new HashMap<>();

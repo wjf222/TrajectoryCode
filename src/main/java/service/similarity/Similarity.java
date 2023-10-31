@@ -1,7 +1,9 @@
 package service.similarity;
 
-import pojo.TracingPoint;
+import entity.TracingPoint;
 
-public interface Similarity {
+import java.io.Serializable;
+
+public interface Similarity extends Serializable {
     double compute(TracingPoint[] first, TracingPoint[] second) ;
 }

@@ -1,9 +1,15 @@
 package service.similarity;
 
-import pojo.TracingPoint;
+import entity.TracingPoint;
 import util.PointTool;
 
 public class EDR implements Similarity {
+
+    public double threshold;
+
+    public EDR(double threshold){
+        this.threshold = threshold;
+    }
     @Override
     public double compute(TracingPoint[] first, TracingPoint[] second) {
         int m = first.length;

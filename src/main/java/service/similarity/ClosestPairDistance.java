@@ -2,13 +2,8 @@ package service.similarity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import pojo.TracingPoint;
-import pojo.TracingQueue;
-import org.apache.commons.math3.util.Pair;
+import entity.TracingPoint;
 import util.PointTool;
-
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 @Data
 @AllArgsConstructor
