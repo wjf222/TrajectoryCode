@@ -6,23 +6,16 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import java.io.IOException;
 
 public class ParamHelper {
-    public static final String propertiesFilePath = "src/main/resources/sim.properties";
     private static ParameterTool paramTool;
-
-    static {
-        try {
-            paramTool = ParameterTool.fromPropertiesFile(propertiesFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
     public static void initFromArgs(String[] args) {
-        if (paramTool == null) {
-            System.out.println("no valid parameters");
-            throw new IllegalArgumentException("no valid parameters");
-        }
         if(args != null && args.length != 0) {
             ParameterTool argParameter = ParameterTool.fromArgs(args);
+            String propertiesFilePath = argParameter.getRequired("ConfigFile");
+            try {
+                paramTool = ParameterTool.fromPropertiesFile(propertiesFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             paramTool = paramTool.mergeWith(argParameter);
         }
         System.out.println("============Overall Params============");

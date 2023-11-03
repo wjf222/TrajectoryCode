@@ -4,8 +4,6 @@ import entity.QueryPair;
 import entity.QueryTraInfo;
 import entity.TracingPoint;
 import operator.*;
-import org.apache.flink.api.connector.sink2.Sink;
-import org.apache.flink.api.connector.sink2.SinkWriter;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -15,8 +13,6 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.OutputTag;
 import service.similarity.*;
 import util.ParamHelper;
-
-import java.io.IOException;
 
 
 public class Main {
@@ -71,41 +67,48 @@ public class Main {
         SingleOutputStreamOperator<QueryInfo> queryInfoStream = env
                 .readTextFile(queryPath)
                 .keyBy(queryline -> 1)
-                .process(new QueryInfoLoader());
-        queryInfoStream.print();
+                .process(new QueryInfoLoader())
+                .name("查询字符串输入");
         // 并行读取Point 流
         SingleOutputStreamOperator<TracingPoint> pointStream = env
                 .readTextFile(dataPath)
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
-                .flatMap(new Dataloader());
-        // 两流合并获取查询内容
+                .flatMap(new Dataloader())
+                .name("点数据字符串读入");
+        // 两流合并获取查询内 容
         SingleOutputStreamOperator<QueryTraInfo> queryTraInfoStream = pointStream.connect(queryInfoStream)
                 .keyBy(point -> point.id,info -> info.queryTraId)
-                .process(new QueryTraInfoGenerator(timeWindowSize));
+                .process(new QueryTraInfoGenerator(timeWindowSize))
+                .name("两流合并获取查询内容");
         // 结合Point,生成计算对象
         SingleOutputStreamOperator<QueryTraInfo> broadcastQueryTraInfoStream = queryTraInfoStream
                 .keyBy(queryTraInfo -> queryTraInfo.info.queryTraId)
-                .flatMap(new QueryTraInfoBroadcaster(dataSize));
+                .flatMap(new QueryTraInfoBroadcaster(dataSize))
+                .name("广播数据");
         SingleOutputStreamOperator<QueryPair> queryPairSingleOutputStreamOperator = broadcastQueryTraInfoStream.connect(pointStream)
                 .keyBy(queryTraInfo -> queryTraInfo.anotherTraId, point -> point.id)
-                .process(new QueryPairGenerator(timeWindowSize));
+                .process(new QueryPairGenerator(timeWindowSize))
+                .name("广播数据结合点信息");
         // 基于XZ2剪枝
         // 开始时间戳
         queryPairSingleOutputStreamOperator = queryPairSingleOutputStreamOperator
                 .map(pair -> {
                     pair.startTimestamp = System.currentTimeMillis();
                     return pair;
-                });
+                })
+                .name("开始时间戳");
         // 相似度计算
         queryPairSingleOutputStreamOperator
                 .keyBy(new QueryPairKeySelector())
-                .process(new SimilarCalculator(distMeasure));
+                .process(new SimilarCalculator(distMeasure))
+                .name("相似度计算");
         // 结束时间戳
         queryPairSingleOutputStreamOperator = queryPairSingleOutputStreamOperator
                 .map(pair -> {
                     pair.endTimestamp = System.currentTimeMillis();
                     return pair;
-                });
+                })
+                .name("结束时间戳");
         // 统计时间戳
         final OutputTag<QueryPair> lateReduceQueryPair = new OutputTag<QueryPair>("lateReduceQueryPair") {
         };

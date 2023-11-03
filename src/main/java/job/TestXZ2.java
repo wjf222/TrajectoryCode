@@ -1,3 +1,5 @@
+package job;
+
 import indexs.IndexRange;
 import indexs.commons.Window;
 import indexs.z2.XZ2SFC;

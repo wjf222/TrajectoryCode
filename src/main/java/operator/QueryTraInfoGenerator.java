@@ -17,7 +17,7 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
     // 轨迹状态
     private ValueState<TracingQueue> traState;
 
-    public QueryTraInfoGenerator(long timeWindow) {
+    public  QueryTraInfoGenerator(long timeWindow) {
         this.timeWindow = timeWindow;
     }
     @Override
@@ -30,7 +30,6 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
     @Override
     public void processElement1(TracingPoint value, KeyedCoProcessFunction<Long, TracingPoint, QueryInfo, QueryTraInfo>.Context ctx, Collector<QueryTraInfo> out) throws Exception {
         TracingQueue tra = traState.value();
-        tra.DeCircularQueue();
         tra.EnCircularQueue(value);
         traState.update(tra);
     }
