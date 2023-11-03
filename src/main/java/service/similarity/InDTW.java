@@ -1,18 +1,20 @@
-package service.increment;
+package service.similarity;
 
 import entity.TracingPoint;
+import service.Similarity;
 import util.PointTool;
 
-public class DTW implements IncrementSimilarity{
+public class InDTW implements Similarity {
     private double[] lastResult;
     private boolean init;
 
-    public DTW(int length) {
+    public InDTW(int length) {
         lastResult = new double[length];
         init = false;
     }
     @Override
-    public double compute(TracingPoint source, TracingPoint[] target) {
+    public double compute(TracingPoint[] first, TracingPoint[] target) {
+        TracingPoint source = first[first.length-1];
         double[] dist = new double[target.length];
         for(int j = 0; j < target.length;j++){
             dist[j] = Math.abs(PointTool.getDistance(source.longitude,source.latitude,target[j].longitude,target[j].latitude));

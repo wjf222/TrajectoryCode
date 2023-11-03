@@ -11,7 +11,11 @@ import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.OutputTag;
-import service.similarity.*;
+import service.*;
+import service.similarity.DTW;
+import service.similarity.EDR;
+import service.similarity.ERP;
+import service.similarity.LCSS;
 import util.ParamHelper;
 
 

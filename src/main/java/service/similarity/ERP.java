@@ -1,6 +1,7 @@
 package service.similarity;
 
 import entity.TracingPoint;
+import service.Similarity;
 import util.PointTool;
 
 import java.util.HashMap;

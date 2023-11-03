@@ -1,4 +1,4 @@
-package service.similarity;
+package service;
 
 import entity.TracingPoint;
 

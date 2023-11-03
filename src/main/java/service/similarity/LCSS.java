@@ -2,9 +2,8 @@ package service.similarity;
 
 import lombok.extern.slf4j.Slf4j;
 import entity.TracingPoint;
+import service.Similarity;
 import util.PointTool;
-
-import java.io.Serializable;
 
 @Slf4j
 public class LCSS implements Similarity {

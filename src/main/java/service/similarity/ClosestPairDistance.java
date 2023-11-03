@@ -3,6 +3,7 @@ package service.similarity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import entity.TracingPoint;
+import service.Similarity;
 import util.PointTool;
 
 @Data

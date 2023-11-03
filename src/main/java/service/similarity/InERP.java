@@ -1,17 +1,19 @@
-package service.increment;
+package service.similarity;
 
 import entity.TracingPoint;
+import service.Similarity;
 import util.PointTool;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ERP implements IncrementSimilarity {
+public class InERP implements Similarity {
     private double[] lastResult;
     private TracingPoint gap;
 
     @Override
-    public double compute(TracingPoint source, TracingPoint[] target) {
+    public double compute(TracingPoint[] first, TracingPoint[] target) {
+        TracingPoint source = first[first.length-1];
         Map<TracingPoint, Double> mapGapDist = new HashMap<>();
         mapGapDist.put(source, PointTool.getDistance(source, gap));
         for (TracingPoint point : target) {
