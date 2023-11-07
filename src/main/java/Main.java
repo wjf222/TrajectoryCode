@@ -79,7 +79,7 @@ public class Main {
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
                 .flatMap(new Dataloader())
                 .name("点数据字符串读入");
-        // 两流合并获取查询内 容
+        // 两流合并获取查询内容
         SingleOutputStreamOperator<QueryTraInfo> queryTraInfoStream = pointStream.connect(queryInfoStream)
                 .keyBy(point -> point.id,info -> info.queryTraId)
                 .process(new QueryTraInfoGenerator(timeWindowSize))

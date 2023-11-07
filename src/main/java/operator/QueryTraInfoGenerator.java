@@ -16,7 +16,7 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
     public long timeWindow;
     // 轨迹状态
     private ValueState<TracingQueue> traState;
-
+    private ValueState<Integer> queryNum;
     public  QueryTraInfoGenerator(long timeWindow) {
         this.timeWindow = timeWindow;
     }
@@ -37,6 +37,7 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
     @Override
     public void processElement2(QueryInfo info, KeyedCoProcessFunction<Long, TracingPoint, QueryInfo, QueryTraInfo>.Context ctx, Collector<QueryTraInfo> out) throws Exception {
         TracingQueue tra = traState.value();
+
         if (tra.id == -1) {
             System.out.println("invalid query");
             return;

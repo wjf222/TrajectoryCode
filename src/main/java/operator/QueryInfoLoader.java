@@ -18,11 +18,11 @@ public class QueryInfoLoader extends KeyedProcessFunction<Integer,String, QueryI
 
     @Override
     public void processElement(String queryLine, KeyedProcessFunction<Integer, String, QueryInfo>.Context ctx, Collector<QueryInfo> out) throws Exception {
-        System.out.println(queryLine);
         if (queryLine != null && !queryLine.equals("")) {
             String[] words = queryLine.split(",");
             queryInfoList.add(new QueryInfo(Long.parseLong(words[0]), Double.parseDouble(words[1])));
         }
         queryInfoList.get().forEach(out::collect);
+        queryInfoList.clear();
     }
 }

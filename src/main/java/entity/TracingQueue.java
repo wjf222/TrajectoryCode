@@ -31,6 +31,7 @@ public class TracingQueue implements Serializable {
         if ((rear + 1) % maxQueueSize == front){
             return -1;
         }
+        updateId(point.id);
         queueArray[rear] = point;
         int ans = rear;
         //循环队列在rear指针时，如果只是简单累加，很可能会出现空指针异常
@@ -49,7 +50,16 @@ public class TracingQueue implements Serializable {
         front = (int) ((front + 1) % maxQueueSize);
         return ans;
     }
+    public boolean isEmpty() {
+        return front == rear;
+    }
     public boolean isFull(){
         return (rear + 1) % maxQueueSize == front;
+    }
+
+    public void updateId(long id) {
+        if(this.isEmpty()) {
+            this.id = id;
+        }
     }
 }

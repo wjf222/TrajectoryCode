@@ -37,7 +37,6 @@ public class QueryPairGenerator extends KeyedCoProcessFunction<Long, QueryTraInf
 
         if (info.queryTra.id == tra.id) {
             out.collect(new QueryPair(info.queryTra, info.queryTra, info.info.threshold));
-            return;
         }
     }
 
