@@ -9,6 +9,7 @@ import java.io.Serializable;
  */
 @Data
 public class TracingQueue implements Serializable {
+
     public TracingPoint[] queueArray;
     public long id = -1;
     int front;

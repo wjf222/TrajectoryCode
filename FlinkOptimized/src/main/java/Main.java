@@ -94,6 +94,9 @@ public class Main {
                 .process(new QueryPairGenerator(timeWindowSize))
                 .name("广播数据结合点信息");
         // 基于XZ2剪枝
+        queryPairSingleOutputStreamOperator
+                .filter(new XZFilter())
+                .keyBy(new ComputedKeySelector());
         // 开始时间戳
         queryPairSingleOutputStreamOperator = queryPairSingleOutputStreamOperator
                 .map(pair -> {

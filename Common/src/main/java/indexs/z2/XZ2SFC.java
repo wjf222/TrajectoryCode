@@ -4,7 +4,6 @@ import indexs.IndexRange;
 import indexs.commons.QueryWindow;
 import indexs.commons.Window;
 import lombok.AllArgsConstructor;
-import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 import java.util.ArrayDeque;
@@ -14,8 +13,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 空间扩展填充Z曲线  XZ2 : 用户存储线线、面数据
