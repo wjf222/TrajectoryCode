@@ -1,9 +1,11 @@
+package com.wjf.trajectory.FlinkBase;
+
 import Partition.QueryPairKeySelector;
+import com.wjf.trajectory.FlinkBase.operator.*;
 import entity.QueryInfo;
 import entity.QueryPair;
 import entity.QueryTraInfo;
 import entity.TracingPoint;
-import operator.*;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -11,13 +13,12 @@ import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.OutputTag;
-import service.*;
+import service.Similarity;
 import service.similarity.DTW;
 import service.similarity.EDR;
 import service.similarity.ERP;
 import service.similarity.LCSS;
 import util.ParamHelper;
-
 
 public class Main {
     public static String dataPath;
@@ -57,7 +58,7 @@ public class Main {
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();
         new Main().apply(env);
-        env.execute("Wjf Flink");
+        env.execute("TrajectoryCode Flink Base Test");
     }
 
     public static StreamExecutionEnvironment initEnv() {
@@ -65,7 +66,8 @@ public class Main {
         env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
         return env;
     }
-    public void apply(StreamExecutionEnvironment env) {
+
+    public void apply(StreamExecutionEnvironment env){
         // 读取query 字符串
         SingleOutputStreamOperator<QueryInfo> queryInfoStream = env
                 .readTextFile(queryPath)
