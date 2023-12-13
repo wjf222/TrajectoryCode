@@ -10,6 +10,7 @@ public class QueryInfo implements Serializable {
     public double threshold;
 
     public QueryInfo() {
+        queryTraId = -1;
     }
 
     public QueryInfo(long queryId, double threshold) {

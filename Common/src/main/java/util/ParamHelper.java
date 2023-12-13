@@ -65,4 +65,8 @@ public class ParamHelper {
     public static String getSinkDir() {
         return paramTool.getRequired("sink_dir");
     }
+
+    public static int getContinuousQueryNum() {
+        return paramTool.getInt("continuous_query_num");
+    }
 }

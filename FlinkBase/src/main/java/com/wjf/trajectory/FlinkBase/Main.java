@@ -24,6 +24,7 @@ public class Main {
     public static String dataPath;
     public static String queryPath;
     public static int dataSize;
+    public static int continuousQueryNum;
     public static Similarity distMeasure;
     public static double lcssThr;
     public static int lcssDelta;
@@ -38,7 +39,7 @@ public class Main {
         dataPath = ParamHelper.getDataPath();
         queryPath = ParamHelper.getQueryPath();
         dataSize = ParamHelper.getDataSize();
-
+        continuousQueryNum = ParamHelper.getContinuousQueryNum();
         lcssThr = ParamHelper.getLCSSThreshold();
         lcssDelta = ParamHelper.getLCSSDelta();
         edrThr = ParamHelper.getEDRThreshold();
@@ -58,7 +59,7 @@ public class Main {
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();
         new Main().apply(env);
-        env.execute("TrajectoryCode Flink Base Test");
+
     }
 
     public static StreamExecutionEnvironment initEnv() {
@@ -67,7 +68,7 @@ public class Main {
         return env;
     }
 
-    public void apply(StreamExecutionEnvironment env){
+    public void apply(StreamExecutionEnvironment env) throws Exception {
         // 读取query 字符串
         SingleOutputStreamOperator<QueryInfo> queryInfoStream = env
                 .readTextFile(queryPath)
@@ -77,13 +78,14 @@ public class Main {
         // 并行读取Point 流
         SingleOutputStreamOperator<TracingPoint> pointStream = env
                 .readTextFile(dataPath)
+                // 分发轨迹流到不同节点
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
                 .flatMap(new Dataloader())
-                .name("点数据字符串读入");
+                .name("轨迹数据文件读入");
         // 两流合并获取查询内容
         SingleOutputStreamOperator<QueryTraInfo> queryTraInfoStream = pointStream.connect(queryInfoStream)
                 .keyBy(point -> point.id,info -> info.queryTraId)
-                .process(new QueryTraInfoGenerator(timeWindowSize))
+                .process(new QueryTraInfoGenerator(timeWindowSize,continuousQueryNum))
                 .name("两流合并获取查询内容");
         // 结合Point,生成计算对象
         SingleOutputStreamOperator<QueryTraInfo> broadcastQueryTraInfoStream = queryTraInfoStream
@@ -143,5 +145,6 @@ public class Main {
                 .reduce(new ResultReducer());
         //写入文件
         resultQueryPairStream.addSink(new ResultToFileSinker(sinkDir));
+        env.execute("TrajectoryCode Flink Base Test");
     }
 }

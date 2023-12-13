@@ -57,7 +57,7 @@ public class Main {
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();
         new Main().apply(env);
-        env.execute("Wjf Flink");
+        env.execute("TrajectoryCode Flink Optimized");
     }
 
     public static StreamExecutionEnvironment initEnv() {
