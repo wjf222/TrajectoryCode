@@ -14,10 +14,7 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTime
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.OutputTag;
 import service.Similarity;
-import service.similarity.DTW;
-import service.similarity.EDR;
-import service.similarity.ERP;
-import service.similarity.LCSS;
+import service.similarity.*;
 import util.ParamHelper;
 
 public class Main {
@@ -47,14 +44,19 @@ public class Main {
         delayReduceTime = ParamHelper.getDelayReduceTime();
         timeWindowSize = ParamHelper.getTimeWindowSize();
         int dist_measure_op = ParamHelper.getDistMeasure();
-        if (dist_measure_op == 1) {
-            distMeasure = new DTW();
-        } else if (dist_measure_op == 2) {
-            distMeasure = new LCSS(lcssThr, lcssDelta);
-        } else if (dist_measure_op == 3) {
-            distMeasure = new EDR(edrThr);
-        } else {
-            distMeasure = new ERP(erpGap);
+        switch (dist_measure_op) {
+            case 1:
+                distMeasure = new DTW();break;
+            case 2:
+                distMeasure = new LCSS(lcssThr, lcssDelta); break;
+            case 3:
+                distMeasure = new EDR(edrThr); break;
+            case 4:
+                distMeasure = new ERP(erpGap); break;
+            case 11:
+                distMeasure = new InLCSS();break;
+            default:
+                throw new RuntimeException("No Such Similarity Method");
         }
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();

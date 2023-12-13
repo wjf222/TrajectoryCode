@@ -5,6 +5,8 @@ import entity.TracingPoint;
 import service.Similarity;
 import util.PointTool;
 
+import java.util.Deque;
+
 @Slf4j
 public class LCSS implements Similarity {
     public double threshold;
@@ -14,13 +16,15 @@ public class LCSS implements Similarity {
         this.delta = delta;
     }
     @Override
-    public double compute(TracingPoint[] first, TracingPoint[] second) {
-        int la = first.length;
-        int lb = second.length;
+    public double compute(Deque<TracingPoint> first, Deque<TracingPoint> second) {
+        int la = first.size();
+        int lb = second.size();
+        TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);
+        TracingPoint[] secondTrace = second.toArray(new TracingPoint[0]);
         int[][] dp = new int[la+1][lb+1];
         for(int i = 0; i < la;i++){
             for(int j = 0; j < lb;j++){
-                if(PointTool.getDistance(first[i],second[j]) < 50){
+                if(PointTool.getDistance(firstTrace[i],secondTrace[j]) < 50){
                     dp[i + 1][j + 1] = dp[i][j] + 1;
                 } else {
                     dp[i + 1][j + 1] = Math.max(dp[i][j+1],dp[i+1][j]);

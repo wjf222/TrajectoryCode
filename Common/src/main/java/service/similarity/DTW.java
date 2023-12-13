@@ -4,16 +4,20 @@ import entity.TracingPoint;
 import service.Similarity;
 import util.PointTool;
 
+import java.util.Deque;
+
 
 public class DTW implements Similarity {
     @Override
-    public double compute(TracingPoint[] first, TracingPoint[] second){
-        int r = first.length;
-        int c = second.length;
-        double[][] D0 = new double[r+1][c+1];
-        for(int i = 0; i < r;i++){
-            for(int j = 0; j < second.length;j++){
-                D0[i][j] = Math.abs(PointTool.getDistance(first[i].longitude,first[i].latitude,second[j].longitude,second[j].latitude));
+    public double compute(Deque<TracingPoint> first, Deque<TracingPoint> second){
+        int firstSize = first.size();
+        int secondSize = second.size();
+        TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);
+        TracingPoint[] secondTrace = second.toArray(new TracingPoint[0]);
+        double[][] D0 = new double[firstSize+1][secondSize+1];
+        for(int i = 0; i < firstSize;i++){
+            for(int j = 0; j < secondSize;j++){
+                D0[i][j] = Math.abs(PointTool.getDistance(firstTrace[i].longitude,firstTrace[i].latitude,secondTrace[j].longitude,secondTrace[j].latitude));
             }
         }
         return calculation(D0);

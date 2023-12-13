@@ -18,20 +18,23 @@ public class InClosestPairDistance implements Similarity {
     }
 
     @Override
-    public double compute(TracingPoint[] first, TracingPoint[] target) {
-        TracingPoint source = first[first.length-1];
+    public double compute(Deque<TracingPoint> first, Deque<TracingPoint> second) {
+        TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);
+        TracingPoint[] secondTrace = second.toArray(new TracingPoint[0]);
+        TracingPoint source = firstTrace[firstTrace.length-1];
         double min = Integer.MAX_VALUE;
-        for (TracingPoint point : target) {
+        for (TracingPoint point : secondTrace) {
             min = Math.min(PointTool.getDistance(point, source), min);
         }
         while (stack.size() > 0 && min < stack.peekLast().getSecond()) {
             stack.pollLast();
         }
-        int rear = tracingQueue.EnCircularQueue(source);
-        if(stack.size() >0 && stack.peekFirst().getFirst() == rear){
-            stack.pollFirst();
-        }
-        stack.offerLast(new Pair<>(rear,min));
+        // TODO 重新写一遍
+//        int rear = tracingQueue.EnCircularQueue(source);
+//        if(stack.size() >0 && stack.peekFirst().getFirst() == rear){
+//            stack.pollFirst();
+//        }
+//        stack.offerLast(new Pair<>(rear,min));
         return stack.peekFirst().getSecond();
     }
 }
