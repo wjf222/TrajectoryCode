@@ -1,5 +1,6 @@
 package service.similarity;
 
+import entity.TracingQueue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import entity.TracingPoint;
@@ -13,9 +14,9 @@ import java.util.Deque;
 public class ClosestPairDistance implements Similarity {
     // 可以结合单调栈实现增量计算
     @Override
-    public double compute(Deque<TracingPoint> first, Deque<TracingPoint> second) {
-        int la = first.size();
-        int lb = second.size();
+    public double compute(TracingQueue firstTrajectory, TracingQueue secondTrajectory) {
+        Deque<TracingPoint> first = firstTrajectory.queueArray;
+        Deque<TracingPoint> second = secondTrajectory.queueArray;
         double ans = Integer.MAX_VALUE;
         for (TracingPoint point : first) {
             for (TracingPoint tracingPoint : second) {

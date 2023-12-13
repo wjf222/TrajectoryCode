@@ -18,7 +18,9 @@ public class InClosestPairDistance implements Similarity {
     }
 
     @Override
-    public double compute(Deque<TracingPoint> first, Deque<TracingPoint> second) {
+    public double compute(TracingQueue firstTrajectory, TracingQueue secondTrajectory) {
+        Deque<TracingPoint> first = firstTrajectory.queueArray;
+        Deque<TracingPoint> second = secondTrajectory.queueArray;
         TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);
         TracingPoint[] secondTrace = second.toArray(new TracingPoint[0]);
         TracingPoint source = firstTrace[firstTrace.length-1];

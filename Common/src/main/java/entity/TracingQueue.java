@@ -35,21 +35,6 @@ public class TracingQueue implements Serializable {
         return queueArray.offerLast(point);
     }
 
-    /**
-     * 删除元素
-     * @return 元素位置
-     */
-    public TracingPoint DeCircularQueue (){
-        //满足front = rear时，说明队列为空
-        return queueArray.pollFirst();
-    }
-    public boolean isEmpty() {
-        return front == rear;
-    }
-    public boolean isFull(){
-        return (rear + 1) % maxQueueSize == front;
-    }
-
     public void updateId(long id) {
         this.id = id;
     }

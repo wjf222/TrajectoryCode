@@ -1,5 +1,6 @@
 package service.similarity;
 
+import entity.TracingQueue;
 import lombok.extern.slf4j.Slf4j;
 import entity.TracingPoint;
 import service.Similarity;
@@ -16,7 +17,9 @@ public class LCSS implements Similarity {
         this.delta = delta;
     }
     @Override
-    public double compute(Deque<TracingPoint> first, Deque<TracingPoint> second) {
+    public double compute(TracingQueue firstTrajectory, TracingQueue secondTrajectory) {
+        Deque<TracingPoint> first = firstTrajectory.queueArray;
+        Deque<TracingPoint> second = secondTrajectory.queueArray;
         int la = first.size();
         int lb = second.size();
         TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);

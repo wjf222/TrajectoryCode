@@ -18,7 +18,8 @@ public class SimilarCalculator extends KeyedProcessFunction<Tuple2<Long, Long>, 
         TracingQueue queryTra = pair.queryTra;
         TracingQueue anotherTra = pair.anotherTra;
         boolean identity = queryTra.id == anotherTra.id;
-        pair.similarityDistance = identity?0.0:incrementSimilarity.compute(queryTra.queueArray,anotherTra.queueArray);
+//        System.out.printf("QueryTra.length:%d anotherTra.length:%d",queryTra.queueArray.size(),anotherTra.queueArray.size());
+        pair.similarityDistance = identity?0.0:incrementSimilarity.compute(queryTra,anotherTra);
         if (!identity && pair.similarityDistance <= pair.threshold) pair.numSimilarTra++;
         out.collect(pair);
     }

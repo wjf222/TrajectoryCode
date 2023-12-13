@@ -1,6 +1,7 @@
 package service.similarity;
 
 import entity.TracingPoint;
+import entity.TracingQueue;
 import service.Similarity;
 import util.PointTool;
 
@@ -9,7 +10,9 @@ import java.util.Deque;
 
 public class DTW implements Similarity {
     @Override
-    public double compute(Deque<TracingPoint> first, Deque<TracingPoint> second){
+    public double compute(TracingQueue firstTrajectory, TracingQueue secondTrajectory){
+        Deque<TracingPoint> first = firstTrajectory.queueArray;
+        Deque<TracingPoint> second = secondTrajectory.queueArray;
         int firstSize = first.size();
         int secondSize = second.size();
         TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);

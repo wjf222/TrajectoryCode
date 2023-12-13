@@ -53,7 +53,7 @@ public class Main {
                 distMeasure = new EDR(edrThr); break;
             case 4:
                 distMeasure = new ERP(erpGap); break;
-            case 11:
+            case 12:
                 distMeasure = new InLCSS();break;
             default:
                 throw new RuntimeException("No Such Similarity Method");
