@@ -97,9 +97,9 @@ public class Main {
                 .process(new QueryPairGenerator(timeWindowSize))
                 .name("广播数据结合点信息");
         // 基于XZ2剪枝
-        queryPairSingleOutputStreamOperator
-                .filter(new XZFilter())
-                .keyBy(new ComputedKeySelector());
+//        queryPairSingleOutputStreamOperator
+//                .filter(new XZFilter())
+//                .keyBy(new ComputedKeySelector());
         // 开始时间戳
         queryPairSingleOutputStreamOperator = queryPairSingleOutputStreamOperator
                 .map(pair -> {
@@ -108,12 +108,12 @@ public class Main {
                 })
                 .name("开始时间戳");
         // 相似度计算
-        queryPairSingleOutputStreamOperator
+        SingleOutputStreamOperator<QueryPair> similarOutputStream = queryPairSingleOutputStreamOperator
                 .keyBy(new QueryPairKeySelector())
                 .process(new SimilarCalculator(distMeasure))
                 .name("相似度计算");
         // 结束时间戳
-        queryPairSingleOutputStreamOperator = queryPairSingleOutputStreamOperator
+        queryPairSingleOutputStreamOperator = similarOutputStream
                 .map(pair -> {
                     pair.endTimestamp = System.currentTimeMillis();
                     return pair;

@@ -14,9 +14,9 @@ public class QueryTraInfo implements Serializable {
         this.queryTra = tra;
         this.info = info;
     }
-    public QueryTraInfo(QueryTraInfo another,long anotherTraId) {
-        this.queryTra = another.queryTra;
-        this.info = another.info;
+    public QueryTraInfo(QueryTraInfo tra,long anotherTraId) {
+        this.queryTra = tra.queryTra;
+        this.info = tra.info;
         this.anotherTraId = anotherTraId;
     }
 }

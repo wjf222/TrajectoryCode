@@ -32,18 +32,18 @@ public class QueryPairGenerator extends KeyedCoProcessFunction<Long, QueryTraInf
     @Override
     public void processElement1(QueryTraInfo info, KeyedCoProcessFunction<Long, QueryTraInfo, TracingPoint, QueryPair>.Context ctx, Collector<QueryPair> out) throws Exception {
         TracingQueue tra = traState.value();
-        if (tra.id == -1) return; //尚未形成
-        tra = SerializationUtils.clone(tra);
 
-        if (info.queryTra.id == tra.id) {
-            out.collect(new QueryPair(info.queryTra, info.queryTra, info.info.threshold));
-        }
+        // 还没有点数据写入
+        if (tra.id == -1) return;
+        tra = SerializationUtils.clone(tra);
+        out.collect(new QueryPair(info.queryTra, tra, info.info.threshold));
     }
 
     @Override
     public void processElement2(TracingPoint point, KeyedCoProcessFunction<Long, QueryTraInfo, TracingPoint, QueryPair>.Context ctx, Collector<QueryPair> out) throws Exception {
         TracingQueue tra = traState.value();
         tra.EnCircularQueue(point);
+        tra.id = point.id;
         traState.update(tra);
     }
 }

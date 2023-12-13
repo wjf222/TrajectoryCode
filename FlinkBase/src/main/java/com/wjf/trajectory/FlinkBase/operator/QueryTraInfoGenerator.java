@@ -46,7 +46,6 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
             QueryTraInfo queryTraInfo = new QueryTraInfo(tra, queryInfoValueState.value());
             out.collect(queryTraInfo);
             queryNum.update(queryNumAccumulator+1);
-            System.out.printf("QueryInfoId:%d\tTraId:%d\tqueryNum:%d\t\r\n",queryInfoId,tra.id,queryNumAccumulator+1);
         }
     }
 
