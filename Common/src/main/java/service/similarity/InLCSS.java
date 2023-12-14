@@ -14,7 +14,7 @@ public class InLCSS implements Similarity {
     public double compute(TracingQueue firstTrajectory, TracingQueue secondTrajectory) {
         Map<TrajectoryIdPair, List<Double>> trajectoryIdPairListMap = threadLastResult.get();
         TrajectoryIdPair trajectoryIdPair = new TrajectoryIdPair(firstTrajectory.getId(), secondTrajectory.getId());
-        List<Double> lastResult = trajectoryIdPairListMap.get(trajectoryIdPair);
+        List<Double> lastResult = trajectoryIdPairListMap.getOrDefault(trajectoryIdPair,new ArrayList<>());
 
         Deque<TracingPoint> first = firstTrajectory.queueArray;
         Deque<TracingPoint> second = secondTrajectory.queueArray;

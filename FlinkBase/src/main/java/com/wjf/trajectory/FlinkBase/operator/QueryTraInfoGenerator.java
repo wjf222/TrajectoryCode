@@ -57,7 +57,10 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
         traState.update(tra);
         queryInfoValueState.update(info);
         queryNum.update(1);
-        QueryTraInfo queryTraInfo = new QueryTraInfo(tra, info);
-        out.collect(queryTraInfo);
+        // 如果查询轨迹已经初始化完成
+        if(!tra.queueArray.isEmpty()) {
+            QueryTraInfo queryTraInfo = new QueryTraInfo(tra, info);
+            out.collect(queryTraInfo);
+        }
     }
 }
