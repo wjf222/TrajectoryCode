@@ -32,6 +32,10 @@ public class TracingQueue implements Serializable {
      * @return 元素位置
      */
     public boolean EnCircularQueue(TracingPoint point){
+        // 添加上限设置
+        while (queueArray.size() >= maxQueueSize) {
+            queueArray.pollFirst();
+        }
         return queueArray.offerLast(point);
     }
 

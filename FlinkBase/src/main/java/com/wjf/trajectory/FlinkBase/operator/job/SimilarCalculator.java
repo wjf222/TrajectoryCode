@@ -1,4 +1,4 @@
-package com.wjf.trajectory.FlinkBase.operator;
+package com.wjf.trajectory.FlinkBase.operator.job;
 
 import entity.QueryPair;
 import entity.TracingQueue;

@@ -2,6 +2,7 @@ package com.wjf.trajectory.FlinkBase;
 
 import Partition.QueryPairKeySelector;
 import com.wjf.trajectory.FlinkBase.operator.*;
+import com.wjf.trajectory.FlinkBase.operator.job.SimilarCalculator;
 import entity.QueryInfo;
 import entity.QueryPair;
 import entity.QueryTraInfo;
