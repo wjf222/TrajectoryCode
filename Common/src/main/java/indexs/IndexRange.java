@@ -13,7 +13,9 @@ public class IndexRange {
     public long upper;
     public boolean contained;
 
-
+    public boolean intersect(long index){
+        return index >= lower && index <= upper;
+    }
 }
 class CoveredRange extends IndexRange {
     public CoveredRange(long lower,long upper){

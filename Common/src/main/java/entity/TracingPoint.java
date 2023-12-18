@@ -24,7 +24,13 @@ public class TracingPoint implements Serializable {
     }
     @Override
     public int hashCode(){
-        return 0;
+        int code = 17;
+        long mDoubleLongitude = Double.doubleToLongBits(longitude);
+        long mDoubleLatitude = Double.doubleToLongBits(latitude);
+        code = 31*code + (int)(mDoubleLongitude ^ (mDoubleLongitude >>> 32));
+        code = 31*code + (int)(mDoubleLatitude ^ (mDoubleLatitude >>> 32));
+        code = 31*code + (int)(date ^ (date >>> 32));
+        return code;
     }
 
     @Override
