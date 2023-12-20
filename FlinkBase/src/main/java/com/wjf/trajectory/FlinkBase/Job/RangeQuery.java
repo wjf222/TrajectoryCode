@@ -14,6 +14,7 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
 import service.Similarity;
 import service.similarity.*;
 import util.ParamHelper;
@@ -91,8 +92,13 @@ public class RangeQuery {
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
                 .flatMap(new Dataloader())
                 .name("轨迹数据文件读入");
-        pointStream.keyBy(point -> point.id)
+        // TODO XZ2需要使用
+//        pointStream.keyBy(point -> point.id)
+//                .connect(queryWindowStream)
+//                .process(new XZRangeQueryProcess(xz2SFC));
+        SingleOutputStreamOperator<Long> process = pointStream.keyBy(point -> point.id)
                 .connect(queryWindowStream)
                 .process(new XZRangeQueryProcess(xz2SFC));
+
     }
 }

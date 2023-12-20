@@ -43,6 +43,14 @@ public class XZRangeQueryProcess extends KeyedBroadcastProcessFunction<Long, Tra
                 })
         );
         idTrajectoryMap = getRuntimeContext().getMapState(idTrajectoryMapStateDescriptor);
+        MapStateDescriptor<Window,Set<Long>> windowRangeTrajectoryDescriptor = new MapStateDescriptor<Window, Set<Long>>(
+                "WindowRangeTrajectory",
+                TypeInformation.of(new TypeHint<Window>() {
+                }),
+                TypeInformation.of(new TypeHint<Set<Long>>() {
+                })
+        );
+        rangeTrajectoryState = getRuntimeContext().getMapState(windowRangeTrajectoryDescriptor);
     }
 
     @Override

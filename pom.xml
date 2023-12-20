@@ -90,6 +90,11 @@
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.github.davidmoten</groupId>
+                <artifactId>rtree</artifactId>
+                <version>0.11</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>
