@@ -17,8 +17,11 @@ import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction
 import org.apache.flink.util.Collector;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-public class RTreeRangeQuery extends KeyedBroadcastProcessFunction<Long,TracingPoint, Window,Long> {
+public class RTreeRangeQuery extends KeyedBroadcastProcessFunction<Long,TracingPoint, Window,String> {
     private ValueState<RTree<TracingPoint, Rectangle>> rtreeState;
     public ValueState<Rectangle> mbrState;
 
@@ -36,7 +39,7 @@ public class RTreeRangeQuery extends KeyedBroadcastProcessFunction<Long,TracingP
     }
 
     @Override
-    public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long>.ReadOnlyContext ctx, Collector<Long> out) throws Exception {
+    public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, String>.ReadOnlyContext ctx, Collector<String> out) throws Exception {
         long trajectoryID = point.getId();
         TracingQueue trajectory = trajectoryState.get(trajectoryID);
         if(trajectory == null) {
@@ -49,15 +52,23 @@ public class RTreeRangeQuery extends KeyedBroadcastProcessFunction<Long,TracingP
     }
 
     @Override
-    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long>.Context ctx, Collector<Long> out) throws Exception {
+    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, String>.Context ctx, Collector<String> out) throws Exception {
         RTree<TracingPoint, Rectangle> rtree = rtreeState.value();
         Rectangle queryRectangle = Geometries.rectangle(window.getXmin(), window.getYmin(), window.getXmax(), window.getYmax());
-        List<TracingPoint> result = rangeQuery(rtree,queryRectangle);
+        List<Long> result = rangeQuery(rtree,queryRectangle);
+        // 结果去重
+        String record = result.stream()
+                .distinct()
+                .sorted()
+                .map(Objects::toString)
+                .collect(Collectors.joining(", "));
+        out.collect(record);
     }
 
     // 范围查询
-    public static List<TracingPoint> rangeQuery(RTree<TracingPoint, Rectangle> rTree, Rectangle queryRectangle){
-        return rTree.search(queryRectangle).map(Entry::value).toList().toBlocking().single();
+    public static List<Long> rangeQuery(RTree<TracingPoint, Rectangle> rTree, Rectangle queryRectangle){
+        return rTree.search(queryRectangle)
+                .map(entry -> entry.value().getId()).toList().toBlocking().single();
     }
 
     // 添加轨迹点到 RTree

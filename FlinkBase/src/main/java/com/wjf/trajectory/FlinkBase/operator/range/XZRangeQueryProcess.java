@@ -15,8 +15,9 @@ import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction
 import org.apache.flink.util.Collector;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class XZRangeQueryProcess extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long> {
+public class XZRangeQueryProcess extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, String> {
     private MapState<Window, List<IndexRange>> windowRangeMap;
     private MapState<Window,Set<Long>> rangeTrajectoryState;
     private MapState<Long, TracingQueue> idTrajectoryMap;
@@ -54,27 +55,33 @@ public class XZRangeQueryProcess extends KeyedBroadcastProcessFunction<Long, Tra
     }
 
     @Override
-    public void processElement(TracingPoint value, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long>.ReadOnlyContext ctx, Collector<Long> out) throws Exception {
-        TracingQueue trajectory = idTrajectoryMap.get(value.id);
-        trajectory.EnCircularQueue(value);
+    public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, String>.ReadOnlyContext ctx, Collector<String> out) throws Exception {
+        TracingQueue trajectory = idTrajectoryMap.get(point.id);
+        trajectory.EnCircularQueue(point);
         trajectory.updateIndex(xz2sfc);
-        for(Map.Entry<Window, List<IndexRange>> windowListEntry: windowRangeMap.entries()) {
-            List<IndexRange> ranges = windowListEntry.getValue();
+        idTrajectoryMap.put(point.getId(),trajectory);
+    }
+
+    @Override
+    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, String>.Context ctx, Collector<String> out) throws Exception {
+        List<Window> list = Collections.singletonList(window);
+        List<IndexRange> ranges = this.xz2sfc.ranges(list, Optional.empty());
+        windowRangeMap.put(window, ranges);
+        List<Long> result = new ArrayList<>();
+        for(Map.Entry<Long, TracingQueue> trajectoryEntry: idTrajectoryMap.entries()) {
             for (IndexRange range:ranges) {
-                if(range.intersect(trajectory.getIndex())) {
-                    Set<Long> interIds = rangeTrajectoryState.get(windowListEntry.getKey());
-                    interIds.add(trajectory.getId());
+                if(range.intersect(trajectoryEntry.getValue().getIndex())) {
+                    result.add(trajectoryEntry.getKey());
                     // 已经和一个范围相交,不需要继续判断
                     break;
                 }
             }
         }
-    }
-
-    @Override
-    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long>.Context ctx, Collector<Long> out) throws Exception {
-        List<Window> list = Collections.singletonList(window);
-        List<IndexRange> ranges = this.xz2sfc.ranges(list, Optional.empty());
-        windowRangeMap.put(window, ranges);
+        String record = result.stream()
+                .distinct()
+                .sorted()
+                .map(Objects::toString)
+                .collect(Collectors.joining(", "));
+        out.collect(record);
     }
 }

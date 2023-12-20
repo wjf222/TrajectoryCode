@@ -96,7 +96,7 @@ public class RangeQuery {
 //        pointStream.keyBy(point -> point.id)
 //                .connect(queryWindowStream)
 //                .process(new XZRangeQueryProcess(xz2SFC));
-        SingleOutputStreamOperator<Long> process = pointStream.keyBy(point -> point.id)
+        SingleOutputStreamOperator<String> process = pointStream.keyBy(point -> point.id)
                 .connect(queryWindowStream)
                 .process(new XZRangeQueryProcess(xz2SFC));
 
