@@ -20,7 +20,7 @@ public class DTW implements Similarity {
         double[][] D0 = new double[firstSize+1][secondSize+1];
         for(int i = 0; i < firstSize;i++){
             for(int j = 0; j < secondSize;j++){
-                D0[i][j] = Math.abs(PointTool.getDistance(firstTrace[i].longitude,firstTrace[i].latitude,secondTrace[j].longitude,secondTrace[j].latitude));
+                D0[i][j] = Math.abs(PointTool.getDistance(firstTrace[i].x,firstTrace[i].y,secondTrace[j].x,secondTrace[j].y));
             }
         }
         return calculation(D0);

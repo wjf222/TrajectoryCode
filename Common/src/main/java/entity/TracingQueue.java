@@ -9,7 +9,6 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
-import java.util.Queue;
 
 /**
  * 存储轨迹点的循环队列
@@ -24,10 +23,10 @@ public class TracingQueue implements Serializable {
     int rear;
     long maxQueueSize;
     private Segment segment = new TimeSegment();
-    private double xMin;
-    private double xMax;
-    private double yMin;
-    private double yMax;
+    private double xMin = Double.MAX_VALUE;
+    private double xMax = Double.MIN_VALUE;
+    private double yMin = Double.MAX_VALUE;
+    private double yMax = Double.MIN_VALUE;
     public TracingQueue(){
         this.maxQueueSize = 10;
         this.queueArray = new ArrayDeque<>();
@@ -51,7 +50,23 @@ public class TracingQueue implements Serializable {
         while (queueArray.size() >= maxQueueSize) {
             queueArray.pollFirst();
         }
+        updateMBR(point);
         return queueArray.offerLast(point);
+    }
+
+    private void updateMBR(TracingPoint point) {
+        if(point.getX() < xMin) {
+            xMin = point.getX();
+        }
+        if(point.getY() < yMin) {
+            yMin = point.getY();
+        }
+        if(point.getX() > xMax) {
+            xMax = point.getX();
+        }
+        if(point.getY() > yMax) {
+            yMax = point.getY();
+        }
     }
     /**
      * 添加元素
@@ -83,8 +98,7 @@ public class TracingQueue implements Serializable {
         // 只关心最新一段轨迹
         List<TracingPoint> segment = segments.get(segments.size() - 1);
         Deque<TracingPoint> newTrajectory = new ArrayDeque<>();
-        for (TracingPoint point:
-             segment) {
+        for (TracingPoint point: segment) {
             newTrajectory.offerLast(point);
         }
         this.queueArray = newTrajectory;

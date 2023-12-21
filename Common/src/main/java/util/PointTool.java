@@ -31,6 +31,6 @@ public class PointTool {
     }
 
     public static double getDistance(TracingPoint p1,TracingPoint p2) {
-        return getDistance(p1.longitude,p1.latitude,p2.longitude,p2.latitude);
+        return getDistance(p1.x,p1.y,p2.x,p2.y);
     }
 }

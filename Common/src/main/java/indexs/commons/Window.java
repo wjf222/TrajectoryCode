@@ -43,10 +43,10 @@ public class Window {
             return false;
         }
         TracingPoint a = (TracingPoint) obj;
-        return Math.abs(xmin-a.getLongitude()) < 0.00001
-                && Math.abs(ymin-a.getLatitude()) < 0.00001
-                && Math.abs(xmax-a.getLatitude()) < 0.00001
-                && Math.abs(ymax-a.getLatitude()) < 0.00001;
+        return Math.abs(xmin-a.getX()) < 0.00001
+                && Math.abs(ymin-a.getY()) < 0.00001
+                && Math.abs(xmax-a.getY()) < 0.00001
+                && Math.abs(ymax-a.getY()) < 0.00001;
     }
 
     public String toString() {

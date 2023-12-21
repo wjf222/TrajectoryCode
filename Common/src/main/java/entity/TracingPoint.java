@@ -9,24 +9,24 @@ public class TracingPoint implements Serializable {
     // 轨迹编号
     public long id;
     // 经度
-    public double longitude;
+    public double x;
     // 纬度
-    public double latitude;
+    public double y;
     // 时间
     public long date;
 
     public TracingPoint(){}
-    public TracingPoint(double longitude, double latitude, long date, long id) {
-        this.longitude = longitude;
-        this.latitude = latitude;
+    public TracingPoint(double x, double y, long date, long id) {
+        this.x = x;
+        this.y = y;
         this.date = date;
         this.id = id;
     }
     @Override
     public int hashCode(){
         int code = 17;
-        long mDoubleLongitude = Double.doubleToLongBits(longitude);
-        long mDoubleLatitude = Double.doubleToLongBits(latitude);
+        long mDoubleLongitude = Double.doubleToLongBits(x);
+        long mDoubleLatitude = Double.doubleToLongBits(y);
         code = 31*code + (int)(mDoubleLongitude ^ (mDoubleLongitude >>> 32));
         code = 31*code + (int)(mDoubleLatitude ^ (mDoubleLatitude >>> 32));
         code = 31*code + (int)(date ^ (date >>> 32));
@@ -45,7 +45,7 @@ public class TracingPoint implements Serializable {
             return false;
         }
         TracingPoint a = (TracingPoint) obj;
-        return id == a.id && Math.abs(longitude-a.getLongitude()) < 0.00001
-                && Math.abs(latitude-a.getLatitude()) < 0.00001 && date == a.date;
+        return id == a.id && Math.abs(x -a.getX()) < 0.00001
+                && Math.abs(y -a.getY()) < 0.00001 && date == a.date;
     }
 }

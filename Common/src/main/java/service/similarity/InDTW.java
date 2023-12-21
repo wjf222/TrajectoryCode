@@ -24,7 +24,7 @@ public class InDTW implements Similarity {
         TracingPoint source = firstTrace[firstTrace.length-1];
         double[] dist = new double[secondTrace.length];
         for(int j = 0; j < secondTrace.length;j++){
-            dist[j] = Math.abs(PointTool.getDistance(source.longitude,source.latitude,secondTrace[j].longitude,secondTrace[j].latitude));
+            dist[j] = Math.abs(PointTool.getDistance(source.x,source.y,secondTrace[j].x,secondTrace[j].y));
         }
         for (int j = 0; j < secondTrace.length; j++) {
             if(!init && j != 0) {

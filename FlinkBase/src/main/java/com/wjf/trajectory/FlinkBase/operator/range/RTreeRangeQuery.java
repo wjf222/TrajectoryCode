@@ -3,8 +3,6 @@ package com.wjf.trajectory.FlinkBase.operator.range;
 import com.github.davidmoten.rtree.RTree;
 import com.github.davidmoten.rtree.geometry.Geometries;
 import com.github.davidmoten.rtree.geometry.Rectangle;
-import com.google.gson.Gson;
-import entity.RangeQueryResult;
 import entity.TracingPoint;
 import entity.TracingQueue;
 import indexs.commons.Window;
@@ -22,8 +20,6 @@ import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction
 import org.apache.flink.util.Collector;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class RTreeRangeQuery extends KeyedBroadcastProcessFunction<Long,TracingPoint, Window, Tuple2<Window,List<Long>>> {
     private ValueState<RTree<TracingPoint, Rectangle>> rtreeState;
@@ -57,7 +53,7 @@ public class RTreeRangeQuery extends KeyedBroadcastProcessFunction<Long,TracingP
         }
         trajectory.EnCircularQueue(point);
         RTree<TracingPoint, Rectangle> rTree = rtreeState.value();
-        rTree = addTrajectoryPoint(rTree,point.getLongitude(),point.getLatitude(),point);
+        rTree = addTrajectoryPoint(rTree,point.getX(),point.getY(),point);
         rtreeState.update(rTree);
     }
 

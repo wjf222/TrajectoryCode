@@ -24,8 +24,8 @@ public class Pretreatment {
     private static final double MAX_LATITUDE = 90.0;
 
     public static boolean positionRange(TracingPoint point) {
-        double lon = point.getLongitude();
-        double lat = point.getLatitude();
+        double lon = point.getX();
+        double lat = point.getY();
         return positionRange(lon,lat);
     }
     public static boolean positionRange(double lon,double lat) {
