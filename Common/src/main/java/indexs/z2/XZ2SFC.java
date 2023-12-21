@@ -4,8 +4,10 @@ import indexs.IndexRange;
 import indexs.commons.QueryWindow;
 import indexs.commons.Window;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.apache.flink.api.java.tuple.Tuple2;
 
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,7 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * SFC：空间填充曲线缩写
  * @author 王纪锋
  */
-public class XZ2SFC {
+@Data
+public class XZ2SFC implements Serializable {
 
     /**
      * 初始四划分
@@ -241,7 +244,8 @@ public class XZ2SFC {
      * 一个包含了坐标边界的包围盒
      */
     @AllArgsConstructor
-    private static class Bounding{
+    @Data
+    public static class Bounding implements Serializable{
         /**
          * X 下界
          */
@@ -264,15 +268,16 @@ public class XZ2SFC {
      * 扩展Z曲线元素。为了简化计算，边界是指非扩展的Z元素
      * 扩展Z元素是指一个正常的Z元素，它的上界扩展了它的宽度和高度的两倍，按照惯例，元素是正方形
      */
-    private class XElement {
+    @Data
+    public static class XElement implements Serializable{
         /**
          * 扩展后的X边界
          */
-        double xext;
+        private double xext;
         /**
          * 扩展后的Y边界
          */
-        double yext;
+        private double yext;
 
         private double xmin;
         private double ymin;

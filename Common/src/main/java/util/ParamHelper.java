@@ -42,6 +42,10 @@ public class ParamHelper {
         return paramTool.getInt("dist_measure");
     }
 
+    public static int getRangeMeasure() {
+        return paramTool.getInt("range_measure");
+    }
+
     public static double getLCSSThreshold() {
         return paramTool.getDouble("lcss_threshold");
     }

@@ -28,7 +28,12 @@ public class TracingQueue implements Serializable {
     private double xMax;
     private double yMin;
     private double yMax;
-    public TracingQueue(){}
+    public TracingQueue(){
+        this.maxQueueSize = 10;
+        this.queueArray = new ArrayDeque<>();
+        this.front = 0;
+        this.rear = 0;
+    }
     public TracingQueue(long maxSize) {
         this.maxQueueSize = maxSize;
         this.queueArray = new ArrayDeque<>();

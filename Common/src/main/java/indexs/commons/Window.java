@@ -48,4 +48,8 @@ public class Window {
                 && Math.abs(xmax-a.getLatitude()) < 0.00001
                 && Math.abs(ymax-a.getLatitude()) < 0.00001;
     }
+
+    public String toString() {
+        return String.format("{xMin:%f,yMin:%f,xMax:%f,yMax:%f}",xmin,ymin,xmax,ymax);
+    }
 }
