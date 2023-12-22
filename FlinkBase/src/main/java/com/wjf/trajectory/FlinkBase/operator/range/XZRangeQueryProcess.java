@@ -1,7 +1,5 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
-import com.github.davidmoten.rtree.RTree;
-import com.github.davidmoten.rtree.geometry.Rectangle;
 import entity.TracingPoint;
 import entity.TracingQueue;
 import indexs.IndexRange;
@@ -9,7 +7,6 @@ import indexs.commons.Window;
 import indexs.z2.XZ2SFC;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
-import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -20,7 +17,6 @@ import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction
 import org.apache.flink.util.Collector;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class XZRangeQueryProcess extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<Window,List<Long>>> {
     private MapState<Window, List<IndexRange>> windowRangeMap;

@@ -1,7 +1,6 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
 import com.google.gson.Gson;
-import entity.QueryPair;
 import entity.RangeQueryResult;
 import indexs.commons.Window;
 import org.apache.flink.api.java.tuple.Tuple2;

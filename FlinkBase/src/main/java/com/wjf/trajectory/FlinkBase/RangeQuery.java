@@ -1,4 +1,4 @@
-package com.wjf.trajectory.FlinkBase.Job;
+package com.wjf.trajectory.FlinkBase;
 
 import com.wjf.trajectory.FlinkBase.operator.Dataloader;
 import com.wjf.trajectory.FlinkBase.operator.range.RTreeRangeQuery;
@@ -13,14 +13,11 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
-import org.apache.flink.util.Collector;
 import util.ParamHelper;
 
 import java.util.List;
@@ -48,7 +45,6 @@ public class RangeQuery {
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();
         new RangeQuery().apply(env);
-
     }
 
     public static StreamExecutionEnvironment initEnv() {
