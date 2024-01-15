@@ -15,6 +15,8 @@ import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.metrics.Counter;
+import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.runtime.state.KeyedStateFunction;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.util.Collector;
@@ -22,6 +24,7 @@ import org.apache.flink.util.Collector;
 import java.util.List;
 
 public class RTreeRangeQuery extends KeyedBroadcastProcessFunction<Long,TracingPoint, Window, Tuple2<Window,List<Long>>> {
+    private transient Counter calculateStrength;
     private ValueState<RTree<TracingPoint, Rectangle>> rtreeState;
     private ValueStateDescriptor<RTree<TracingPoint, Rectangle>> rTreeDescriptor;
     private MapState<Long, TracingQueue> trajectoryState;
@@ -42,6 +45,14 @@ public class RTreeRangeQuery extends KeyedBroadcastProcessFunction<Long,TracingP
                 TypeInformation.of(new TypeHint<TracingQueue>() {})
         );
         trajectoryState = getRuntimeContext().getMapState(trajectoryDescriptor);
+        // Access Flink's MetricGroup
+        MetricGroup metricGroup = getRuntimeContext().getMetricGroup();
+
+        // Register a new Counter metric for each subtask
+        calculateStrength = metricGroup.counter("CalculateStrength");
+
+        String taskNameWithSubtasks = getRuntimeContext().getTaskNameWithSubtasks();
+        System.out.printf("taskNameWithSubtasks:%s",taskNameWithSubtasks);
     }
 
     @Override

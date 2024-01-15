@@ -12,6 +12,8 @@ import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.metrics.Counter;
+import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.runtime.state.KeyedStateFunction;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.util.Collector;
@@ -21,6 +23,7 @@ import java.util.*;
 public class XZRangeQueryProcess extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<Window,List<Long>>> {
     private MapState<Window, List<IndexRange>> windowRangeMap;
     private MapState<Window,Set<Long>> rangeTrajectoryState;
+    private transient Counter calculateStrength;
     private MapState<Long, TracingQueue> idTrajectoryMap;
     private MapStateDescriptor<Long,TracingQueue>  idTrajectoryMapStateDescriptor;
     private final XZ2SFC xz2sfc;
@@ -54,17 +57,29 @@ public class XZRangeQueryProcess extends KeyedBroadcastProcessFunction<Long, Tra
                 })
         );
         rangeTrajectoryState = getRuntimeContext().getMapState(windowRangeTrajectoryDescriptor);
+
+        String taskNameWithSubtasks = getRuntimeContext().getTaskNameWithSubtasks();
+        // Access Flink's MetricGroup
+        MetricGroup metricGroup = getRuntimeContext().getMetricGroup();
+        // Create a separate MetricGroup for the function
+        MetricGroup functionMetricGroup = metricGroup.addGroup("keyedFunction");
+
+        // Register a new Counter metric for the function
+        calculateStrength = functionMetricGroup.counter("customCounter");
+        System.out.printf("Metric:%s\tSubTask:%s\r\n",calculateStrength.toString(),getRuntimeContext().getTaskNameWithSubtasks());
     }
 
     @Override
     public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<Window,List<Long>>>.ReadOnlyContext ctx, Collector<Tuple2<Window,List<Long>>> out) throws Exception {
         TracingQueue trajectory = idTrajectoryMap.get(point.id);
         if(trajectory == null) {
+            System.out.printf("Metric:%s\tpointId:%d\trest:%d\tshardKey:%d\r\n",calculateStrength.toString(),point.id,point.id%8,point.shardKey);
             trajectory = new TracingQueue();
         }
         trajectory.EnCircularQueue(point);
         trajectory.updateIndex(xz2sfc);
         idTrajectoryMap.put(point.getId(),trajectory);
+
     }
 
     @Override

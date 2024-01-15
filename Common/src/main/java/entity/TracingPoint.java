@@ -1,10 +1,14 @@
 package entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
 
 @Data
+@Builder
+@AllArgsConstructor
 public class TracingPoint implements Serializable {
     // 轨迹编号
     public long id;
@@ -15,6 +19,8 @@ public class TracingPoint implements Serializable {
     // 时间
     public long date;
 
+    // 用于分区
+    public long shardKey;
     public TracingPoint(){}
     public TracingPoint(double x, double y, long date, long id) {
         this.x = x;
