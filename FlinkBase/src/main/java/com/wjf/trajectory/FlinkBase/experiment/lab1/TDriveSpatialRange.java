@@ -1,13 +1,11 @@
 package com.wjf.trajectory.FlinkBase.experiment.lab1;
 
 import com.wjf.trajectory.FlinkBase.operator.Dataloader;
-import com.wjf.trajectory.FlinkBase.operator.range.RTreeRangeQuery;
+import com.wjf.trajectory.FlinkBase.operator.range.OriginRangeQuery;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeResultSink;
-import com.wjf.trajectory.FlinkBase.operator.range.XZRangeQueryProcess;
 import entity.TracingPoint;
 import indexs.commons.Window;
-import indexs.z2.XZ2SFC;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -26,8 +24,8 @@ public class TDriveSpatialRange {
     public static String queryPath;
     public static KeyedBroadcastProcessFunction<Long,TracingPoint, Window, Tuple2<Window, List<Long>>> rangeMeasure;
     public static String sinkDir;
+    private static String measure;
     public static void main(String[] args) throws Exception {
-        XZ2SFC xz2SFC = new XZ2SFC((short) 10,116.0,116.8,39.5,40.3);
         ParamHelper.initFromArgs(args);
         sinkDir = ParamHelper.getSinkDir();
         dataPath = ParamHelper.getDataPath();
@@ -35,11 +33,10 @@ public class TDriveSpatialRange {
         int range_measure_op = ParamHelper.getRangeMeasure();
         switch (range_measure_op) {
             case 1:
-                rangeMeasure = new XZRangeQueryProcess(xz2SFC);break;
-            case 2:
-                rangeMeasure = new RTreeRangeQuery(); break;
+                measure = "Origin";
+                rangeMeasure = new OriginRangeQuery(); break;
             default:
-                throw new RuntimeException("No Such Similarity Method");
+                throw new RuntimeException("No Such range Method");
         }
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();
@@ -72,19 +69,19 @@ public class TDriveSpatialRange {
                 .flatMap(new Dataloader())
                 .name("轨迹数据文件读入");
         // 开始时间戳
-        pointStream = pointStream
-                .connect(queryWindowStream)
-                .process()
-                .map(pair -> {
-                    pair.startTimestamp = System.currentTimeMillis();
-                    return pair;
-                })
-                .name("开始时间戳");
+//        pointStream = pointStream
+//                .connect(queryWindowStream)
+//                .process()
+//                .map(pair -> {
+//                    pair.startTimestamp = System.currentTimeMillis();
+//                    return pair;
+//                })
+//                .name("开始时间戳");
         SingleOutputStreamOperator<Tuple2<Window,List<Long>>> rangeQueryResultStream = pointStream.keyBy(point -> point.id)
                 .connect(queryWindowStream)
                 .process(rangeMeasure)
                 .name("执行范围查询");
         rangeQueryResultStream.addSink(new RangeResultSink(sinkDir));
-        env.execute("TrajectoryCode Flink Base Range Query Test");
+        env.execute(String.format("TrajectoryCode %s Range Query", measure));
     }
 }
