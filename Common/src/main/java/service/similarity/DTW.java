@@ -10,9 +10,9 @@ import java.util.Deque;
 
 public class DTW implements Similarity {
     @Override
-    public double compute(TracingQueue firstTrajectory, TracingQueue secondTrajectory){
+    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory){
         Deque<TracingPoint> first = firstTrajectory.queueArray;
-        Deque<TracingPoint> second = secondTrajectory.queueArray;
+        Deque<TracingPoint> second = queryTrajectory.queueArray;
         int firstSize = first.size();
         int secondSize = second.size();
         TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);

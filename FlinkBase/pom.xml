@@ -69,7 +69,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>RangeQuery</mainClass>
+                                    <mainClass>com.wjf.trajectory.FlinkBase.experiment.lab1.TDriveSimilarityTest</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

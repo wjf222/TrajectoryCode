@@ -2,10 +2,11 @@ package util.segment;
 
 import entity.TracingPoint;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TimeSegment implements Segment{
+public class TimeSegment implements Segment, Serializable {
 
     private int timeLimit;
 

@@ -7,5 +7,5 @@ import java.io.Serializable;
 import java.util.Deque;
 
 public interface Similarity extends Serializable {
-    double compute(TracingQueue firstTrajectory, TracingQueue secondTrajectory) ;
+    double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory) ;
 }

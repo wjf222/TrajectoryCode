@@ -11,13 +11,13 @@ import java.util.*;
 public class InLCSS implements Similarity {
     private static final ThreadLocal<Map<TrajectoryIdPair, List<Double>>> threadLastResult = ThreadLocal.withInitial(() -> new HashMap<>());
     @Override
-    public double compute(TracingQueue firstTrajectory, TracingQueue secondTrajectory) {
+    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory) {
         Map<TrajectoryIdPair, List<Double>> trajectoryIdPairListMap = threadLastResult.get();
-        TrajectoryIdPair trajectoryIdPair = new TrajectoryIdPair(firstTrajectory.getId(), secondTrajectory.getId());
+        TrajectoryIdPair trajectoryIdPair = new TrajectoryIdPair(firstTrajectory.getId(), queryTrajectory.getId());
         List<Double> lastResult = trajectoryIdPairListMap.getOrDefault(trajectoryIdPair,new ArrayList<>());
 
         Deque<TracingPoint> first = firstTrajectory.queueArray;
-        Deque<TracingPoint> second = secondTrajectory.queueArray;
+        Deque<TracingPoint> second = queryTrajectory.queueArray;
         TracingPoint source = first.peekLast();
         if(source == null) {
             throw new RuntimeException(String.format("firstTrajectory is null:\r\n first.length:%d\tsecond.length:%d\t",first.size(),second.size()));
