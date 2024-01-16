@@ -23,9 +23,16 @@ public class InEDR implements Similarity {
         double[] result = new double[lastResult.length];
         for(int j = 1; j <=secondTrace.length;j++) {
             int subcost = PointTool.getDistance(source,secondTrace[j-1]) <= 50 ? 0 : 1;
-            result[j] = Math.min(lastResult[j - 1] + subcost, Math.min(lastResult[j] + 1, result[j - 1] + 1));
+            result[j] = Math.min(getLastResult(lastResult,j-1) + subcost, Math.min(getLastResult(lastResult,j) + 1, result[j - 1] + 1));
         }
         lastResult = result;
         return result[secondTrace.length];
+    }
+
+    private double getLastResult(double[] lastResult, int i) {
+        if(i >= lastResult.length){
+            return 0;
+        }
+        return lastResult[i];
     }
 }

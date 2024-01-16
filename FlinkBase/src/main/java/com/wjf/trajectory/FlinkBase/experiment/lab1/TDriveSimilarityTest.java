@@ -31,6 +31,7 @@ public class TDriveSimilarityTest {
     public static long delayReduceTime;
     public static String sinkDir;
     public static long timeWindowSize;
+    public static int query_size;
     public static void main(String[] args) throws Exception {
         ParamHelper.initFromArgs(args);
         sinkDir = ParamHelper.getSinkDir();
@@ -44,6 +45,7 @@ public class TDriveSimilarityTest {
         erpGap = ParamHelper.getERPGap();
         delayReduceTime = ParamHelper.getDelayReduceTime();
         timeWindowSize = ParamHelper.getTimeWindowSize();
+        query_size = ParamHelper.getQuerySize();
         int dist_measure_op = ParamHelper.getDistMeasure();
         switch (dist_measure_op) {
             case 1:
@@ -90,7 +92,7 @@ public class TDriveSimilarityTest {
         // 两流合并获取查询内容
         SingleOutputStreamOperator<QueryTraInfo> queryTraInfoStream = pointStream.connect(queryInfoStream)
                 .keyBy(point -> point.id,info -> info.queryTraId)
-                .process(new QueryTraInfoGenerator(timeWindowSize,continuousQueryNum))
+                .process(new QueryTraInfoGenerator(timeWindowSize,continuousQueryNum,query_size))
                 .name("两流合并获取查询内容");
         // 结合Point,生成计算对象
         SingleOutputStreamOperator<QueryTraInfo> broadcastQueryTraInfoStream = queryTraInfoStream
@@ -110,7 +112,6 @@ public class TDriveSimilarityTest {
                 .name("开始时间戳");
         // 相似度计算
         SingleOutputStreamOperator<QueryPair> similarOutputStream = queryPairSingleOutputStreamOperator
-                .filter(queryPair -> queryPair.queryTra.id == 1000&&queryPair.queryTra.id==1629)
                 .keyBy(new QueryPairKeySelector())
                 .process(new SimilarCalculator(distMeasure))
                 .name("相似度计算");

@@ -28,10 +28,18 @@ public class InERP implements Similarity {
         double[] result = new double[lastResult.length+1];
         for(int j = 1; j <= secondTrace.length;j++) {
             TracingPoint pointB = secondTrace[j - 1];
-            result[j] = Math.min(lastResult[j-1]+PointTool.getDistance(source, pointB),
-                    Math.min(lastResult[j]+mapGapDist.get(source),result[j-1]+mapGapDist.get(pointB)));
+            result[j] = Math.min(getLastResult(lastResult,j-1)+PointTool.getDistance(source, pointB),
+                    Math.min(getLastResult(lastResult,j)+mapGapDist.get(source),result[j-1]+mapGapDist.get(pointB)));
         }
         lastResult = result;
         return result[secondTrace.length];
+    }
+
+
+    private double getLastResult(double[] lastResult, int i) {
+        if(i >= lastResult.length){
+            return 0;
+        }
+        return lastResult[i];
     }
 }

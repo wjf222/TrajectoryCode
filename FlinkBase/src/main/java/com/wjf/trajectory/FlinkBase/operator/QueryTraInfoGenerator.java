@@ -15,13 +15,15 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
 
     public long timeWindow;
     public int continuousQueryNum;
+    public int query_size;
     // 轨迹状态
     private ValueState<TracingQueue> traState;
     private ValueState<QueryInfo> queryInfoValueState;
     private ValueState<Integer> queryNum;
-    public  QueryTraInfoGenerator(long timeWindow,int continuousQueryNum) {
+    public  QueryTraInfoGenerator(long timeWindow,int continuousQueryNum,int query_size) {
         this.timeWindow = timeWindow;
         this.continuousQueryNum = continuousQueryNum;
+        this.query_size = query_size;
     }
     @Override
     public void open(Configuration parameters) throws Exception {
@@ -41,7 +43,7 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
         traState.update(tra);
         long queryInfoId = queryInfoValueState.value().queryTraId;
         int queryNumAccumulator = queryNum.value();
-        if(queryInfoId != -1 && queryNumAccumulator < this.continuousQueryNum) {
+        if(queryInfoId != -1 && queryNumAccumulator < this.continuousQueryNum && tra.queueArray.size() > query_size  ) {
             tra = SerializationUtils.clone(tra);
             QueryTraInfo queryTraInfo = new QueryTraInfo(tra, queryInfoValueState.value());
             out.collect(queryTraInfo);
@@ -58,7 +60,7 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
         queryInfoValueState.update(info);
         queryNum.update(1);
         // 如果查询轨迹已经初始化完成
-        if(!tra.queueArray.isEmpty()) {
+        if(!tra.queueArray.isEmpty() && tra.queueArray.size() > query_size) {
             QueryTraInfo queryTraInfo = new QueryTraInfo(tra, info);
             out.collect(queryTraInfo);
         }

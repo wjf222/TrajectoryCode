@@ -6,6 +6,7 @@ import service.Similarity;
 import util.PointTool;
 
 import java.util.Deque;
+import java.util.List;
 
 public class InDTW implements Similarity {
     private double[] lastResult;
@@ -31,11 +32,18 @@ public class InDTW implements Similarity {
             } else if(init && j == 0){
                 dist[j] += lastResult[j];
             } else if(init){
-                dist[j] += Math.min(Math.min(lastResult[j - 1], dist[j - 1]), lastResult[j]);
+                dist[j] += Math.min(Math.min(getLastResult(lastResult,j-1), dist[j - 1]), getLastResult(lastResult,j));
             }
         }
         lastResult = dist;
         if(!init) init = true;
         return lastResult[secondTrace.length-1];
+    }
+
+    private double getLastResult(double[] lastResult, int i) {
+        if(i >= lastResult.length){
+            return 0;
+        }
+        return lastResult[i];
     }
 }

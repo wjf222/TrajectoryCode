@@ -48,7 +48,6 @@ public class TracingQueue implements Serializable {
     public boolean EnCircularQueue(TracingPoint point){
         // 添加上限设置
         while (queueArray.size() >= maxQueueSize) {
-            System.out.printf("maxQueueSize:%d\r\n",maxQueueSize);
             queueArray.pollFirst();
         }
         updateMBR(point);

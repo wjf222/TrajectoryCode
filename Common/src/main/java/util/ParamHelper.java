@@ -74,4 +74,8 @@ public class ParamHelper {
     public static int getContinuousQueryNum() {
         return paramTool.getInt("continuous_query_num");
     }
+
+    public static int getQuerySize() {
+        return paramTool.getInt("query_size");
+    }
 }
