@@ -1,20 +1,15 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
-import com.google.gson.Gson;
-import entity.RangeQueryResult;
+import entity.RangeQueryPair;
 import indexs.commons.Window;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
-public class RangeResultSink extends RichSinkFunction<Tuple3<Window, Boolean,Long>> {
+public class RangeResultSink extends RichSinkFunction<RangeQueryPair> {
     public String sinkDir;
 
     public RangeResultSink(String sinkDir) {
@@ -31,20 +26,21 @@ public class RangeResultSink extends RichSinkFunction<Tuple3<Window, Boolean,Lon
     }
 
     @Override
-    public void invoke(Tuple3<Window, Boolean,Long> result, Context context) throws Exception {
+    public void invoke(RangeQueryPair result, Context context) throws Exception {
         super.invoke(result, context);
-        // 没有数据则不需要聚合
-        if(!result.f1) {
-            return ;
-        }
-        Window window = result.f0;
+        Window window = result.getWindow();
         String fileName = String.format("%f-%f-%f-%f.txt", window.getXmin(), window.getYmin(), window.getXmax(), window.getYmax());
         //写入文件
         String filePath = sinkDir + fileName;
         File file = new File(filePath);
         if (!file.exists()) file.createNewFile();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file,true))) {
-            writer.write(String.format("processTime:%d",result.f2));
+            writer.write(String.format("TrajectoryId=%d,contain=%s,start=%d,end=%d,time(ms)=%d"
+                    ,result.getTracingQueue().id
+                    ,result.isContain()
+                    ,result.startTimestamp
+                    ,result.endTimestamp
+                    ,result.endTimestamp-result.startTimestamp));
             writer.newLine();
             writer.write("---"); // 用分隔符隔开不同的列表
             writer.newLine();
@@ -56,30 +52,24 @@ public class RangeResultSink extends RichSinkFunction<Tuple3<Window, Boolean,Lon
         super.close();
         File sinkDirFile = new File(sinkDir);
         List<String> result = new ArrayList<>();
+        long count = 0;
+        long total_time = 0;
+        long avg_time = 0;
         for (File sinkFile : sinkDirFile.listFiles()) {
             if (sinkFile.getName().contains("0_aggregate.txt")) continue;
             List<Long> mergedList = readListsFromFile(sinkFile.getPath());
             if(mergedList.size() != 0) {
                 // 结果去重
-                String record = mergedList.stream()
-                        .distinct()
-                        .sorted()
-                        .map(Objects::toString)
-                        .collect(Collectors.joining(", "));
-                RangeQueryResult rangeQueryResult = new RangeQueryResult(sinkFile.getName(), record, mergedList.size());
-                // 创建 Gson 对象
-                Gson gson = new Gson();
-                String jsonString = gson.toJson(rangeQueryResult);
-                result.add(jsonString);
+                for(long time:mergedList){
+                    count++;
+                    total_time = total_time+time;
+                }
             }
         }
         //聚合搜索结果
         String aggFileName = String.format("%s0_aggregate.txt",sinkDir);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(aggFileName))) {
-            for (String value : result) {
-                writer.write(value);
-                writer.newLine();
-            }
+            writer.write(String.format("total_time=%d,total_count=%d,avg_time=%d",total_time,count,total_time/count));
             writer.newLine();
         }
     }
@@ -92,7 +82,9 @@ public class RangeResultSink extends RichSinkFunction<Tuple3<Window, Boolean,Lon
                 if (line.equals("---")) {
                     continue; // 跳过分隔符行
                 }
-                mergedList.add(Long.parseLong(line));
+                String[] split = line.split(",");
+                String cost = split[4].split("=")[1 ];
+                mergedList.add(Long.parseLong(cost));
             }
         } catch (IOException e) {
             e.printStackTrace();

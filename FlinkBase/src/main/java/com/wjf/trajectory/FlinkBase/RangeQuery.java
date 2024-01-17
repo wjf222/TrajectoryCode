@@ -76,7 +76,7 @@ public class RangeQuery {
                 .connect(queryWindowStream)
                 .process(rangeMeasure)
                 .name("执行范围查询");
-        rangeQueryResultStream.addSink(new RangeResultSink(sinkDir));
+//        rangeQueryResultStream.addSink(new RangeResultSink(sinkDir));
         env.execute("TrajectoryCode Flink Base Range Query Test");
     }
 }
