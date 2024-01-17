@@ -4,6 +4,7 @@ import com.wjf.trajectory.FlinkBase.operator.Dataloader;
 import com.wjf.trajectory.FlinkBase.operator.range.OriginRangeQuery;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeResultSink;
+import com.wjf.trajectory.FlinkBase.operator.util.TextSourceFunction;
 import entity.TracingPoint;
 import indexs.commons.Window;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -11,6 +12,7 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -22,7 +24,7 @@ import java.util.List;
 public class TDriveSpatialRange {
     public static String dataPath;
     public static String queryPath;
-    public static KeyedBroadcastProcessFunction<Long,TracingPoint, Window, Tuple2<Window, List<Long>>> rangeMeasure;
+    public static KeyedBroadcastProcessFunction<Long,TracingPoint, Window, Tuple3<Window, Boolean,Long>> rangeMeasure;
     public static String sinkDir;
     private static String measure;
     public static void main(String[] args) throws Exception {
@@ -55,9 +57,10 @@ public class TDriveSpatialRange {
                 BasicTypeInfo.STRING_TYPE_INFO,
                 TypeInformation.of(new TypeHint<Window>() {})
         );
+        ;
         // 读取query 字符串
         BroadcastStream<Window> queryWindowStream = env
-                .readTextFile(queryPath)
+                .addSource(new TextSourceFunction(queryPath))
                 .keyBy(queryline -> 1)
                 .process(new RangeInfoLoader())
                 .broadcast(windowMapStateDescriptor);
@@ -77,7 +80,8 @@ public class TDriveSpatialRange {
 //                    return pair;
 //                })
 //                .name("开始时间戳");
-        SingleOutputStreamOperator<Tuple2<Window,List<Long>>> rangeQueryResultStream = pointStream.keyBy(point -> point.id)
+        SingleOutputStreamOperator<Tuple3<Window, Boolean,Long>> rangeQueryResultStream = pointStream
+                .keyBy(point ->point.id)
                 .connect(queryWindowStream)
                 .process(rangeMeasure)
                 .name("执行范围查询");

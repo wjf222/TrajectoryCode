@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import entity.RangeQueryResult;
 import indexs.commons.Window;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class RangeResultSink extends RichSinkFunction<Tuple2<Window, List<Long>>> {
+public class RangeResultSink extends RichSinkFunction<Tuple3<Window, Boolean,Long>> {
     public String sinkDir;
 
     public RangeResultSink(String sinkDir) {
@@ -30,10 +31,10 @@ public class RangeResultSink extends RichSinkFunction<Tuple2<Window, List<Long>>
     }
 
     @Override
-    public void invoke(Tuple2<Window, List<Long>> result, Context context) throws Exception {
+    public void invoke(Tuple3<Window, Boolean,Long> result, Context context) throws Exception {
         super.invoke(result, context);
         // 没有数据则不需要聚合
-        if(result.f1.size() == 0) {
+        if(!result.f1) {
             return ;
         }
         Window window = result.f0;
@@ -43,10 +44,8 @@ public class RangeResultSink extends RichSinkFunction<Tuple2<Window, List<Long>>
         File file = new File(filePath);
         if (!file.exists()) file.createNewFile();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file,true))) {
-            for (Long value : result.f1) {
-                writer.write(value.toString());
-                writer.newLine();
-            }
+            writer.write(String.format("processTime:%d",result.f2));
+            writer.newLine();
             writer.write("---"); // 用分隔符隔开不同的列表
             writer.newLine();
         }

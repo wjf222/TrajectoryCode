@@ -1,9 +1,7 @@
 package com.wjf.trajectory.FlinkBase.operator;
 
 import entity.TracingPoint;
-import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
-import org.apache.flink.runtime.metrics.dump.MetricQueryService;
 import org.apache.flink.util.Collector;
 
 import java.time.LocalDateTime;
