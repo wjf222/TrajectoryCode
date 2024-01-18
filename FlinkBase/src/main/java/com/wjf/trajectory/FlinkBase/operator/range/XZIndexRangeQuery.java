@@ -33,9 +33,6 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
     private boolean increment;
     private Map<Window,List<IndexRange>> windowIndexRangeMap;
     private XZ2SFC xz2SFC;
-    long sum1 = 0l;
-    long sum2 = 0l;
-    int cc = 0;
     public XZIndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
@@ -140,16 +137,6 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
                 }
             }else {
                 if(count == 1) {
-//                    cc += 1;
-//                    long start = System.currentTimeMillis();
-//                    for (TracingPoint tracingPoint : trajectory.queueArray) {
-//                        if (isPointInsidePolygon(tracingPoint, window.getPointList())) {
-//                            contain = true;
-//                        }
-//                    }
-//                    long end = System.currentTimeMillis();
-//                    sum1 += end-start;
-//                    start = System.currentTimeMillis();
                     List<IndexRange> ranges = windowIndexRangeMap.get(window);
                     int low = 0;
                     int high = ranges.size()-1;
@@ -166,12 +153,6 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
                             low = middle+1;
                         }
                     }
-//                    end = System.currentTimeMillis();
-//                    sum2 += end-start;
-//                    if(sum1 == 50){
-//                        System.out.printf("1");
-//                    }
-//                    System.out.printf("slot:%s\tsum1:%d\tsum2:%d\tcc:%d\r\n",this.toString(),sum1,sum2,cc);
                 } else {
                     if(preContain||isPointInsidePolygon(trajectory.queueArray.getLast(), window.getPointList())){
                         contain = true;
