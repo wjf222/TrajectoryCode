@@ -1,6 +1,8 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
-import entity.RangeQueryPair;
+import com.github.davidmoten.rtree.RTree;
+import com.github.davidmoten.rtree.geometry.Geometries;
+import com.github.davidmoten.rtree.geometry.Rectangle;
 import entity.TracingPoint;
 import entity.TracingQueue;
 import entity.WindowPoint;
@@ -17,13 +19,7 @@ import org.apache.flink.util.Collector;
 
 import java.util.*;
 
-/**
- * out的三个输出：
- * Window：查询窗口
- * Boolean:是否包含
- * Long：查询处理时长
- */
-public class IndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long> {
+public class RTreeIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long> {
     private ValueState<TracingQueue> trajectoryState;
     private ValueStateDescriptor<TracingQueue> trajectoryStateDescriptor;
     private MapStateDescriptor<Window,Integer> windowStateDescriptor;
@@ -31,15 +27,11 @@ public class IndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Tracing
     private MapState<Window,Boolean> windowContain;
     private int query_size;
     private long timeWindowSize;
-    private boolean increment;
-    private Map<Window,List<IndexRange>> windowIndexRangeMap;
-    private XZ2SFC xz2SFC;
-    public IndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC) {
+    RTree<TracingPoint, Rectangle> rtree;
+    public RTreeIndexRangeQuery(int query_size, long timeWindowSize) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
-        this.increment = increment;
-        this.xz2SFC = xz2SFC;
-        this.windowIndexRangeMap = new HashMap<>();
+        rtree = RTree.create();
     }
 
     @Override
@@ -89,70 +81,31 @@ public class IndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Tracing
 
         TracingPoint first = trajectory.queueArray.getFirst();
         TracingPoint last = trajectory.queueArray.getLast();
-        double xMin = Math.min(first.x,last.x);
-        double yMin = Math.min(first.y,last.y);
-        double xMax = Math.max(first.x,last.x);
-        double yMax = Math.max(first.y,last.y);
-        for(Map.Entry<Window,Integer> windowIntegerEntry:windows.immutableEntries()) {
-            Window window = windowIntegerEntry.getKey();
-            if(windowCounts.contains(window)&&windowCounts.get(window) >= windowIntegerEntry.getValue()){
-                continue;
-            }
-            if (!windowIndexRangeMap.containsKey(window)){
-                List<Window> windowList = new ArrayList<>();
-                windowList.add(window);
-                List<IndexRange> ranges = xz2SFC.ranges(windowList, Optional.empty());
-                windowIndexRangeMap.put(window,ranges);
-            }
-            long startTime = System.currentTimeMillis();
-            int count = 0;
-            if(windowCounts.contains(window)) {
-                count = windowCounts.get(window);
-            }
-            count++;
-
-            windowCounts.put(window,count);
-            boolean contain = false;
-            boolean preContain = false;
-            if(windowContain.contains(window)){
-                preContain = windowContain.get(window);
-            }
-            // 执行轨迹范围查询
-            if(!increment) {
-                List<IndexRange> ranges = windowIndexRangeMap.get(window);
-                long index = xz2SFC.index(xMin, yMin, xMax, yMax, true);
-                for (IndexRange range:ranges) {
-                    if(range.intersect(index)) {
-                        contain = true;
-                        // 已经和一个范围相交,不需要继续判断
-                        break;
-                    }
-                }
-            }else {
-                if(count == 1) {
-                    for (TracingPoint tracingPoint : trajectory.queueArray) {
-                        if (isPointInsidePolygon(tracingPoint, window.getPointList())) {
-                            contain = true;
-                        }
-                    }
-                } else {
-                    if(preContain||isPointInsidePolygon(trajectory.queueArray.getLast(), window.getPointList())){
-                        contain = true;
-                    }
-                }
-            }
-            windowContain.put(window,contain);
-            long endTime = System.currentTimeMillis();
-            out.collect(endTime-startTime);
-        }
+        long startTime = System.currentTimeMillis();
+        addTrajectoryPoint(rtree, point.x, point.y,point);
+        long endTime = System.currentTimeMillis();
+        out.collect(endTime-startTime);
     }
 
     @Override
     public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window,Long>.Context ctx, Collector<Long> out) throws Exception {
-        BroadcastState<Window, Integer> broadcastState = ctx.getBroadcastState(windowStateDescriptor);
-        broadcastState.put(window,10);
+        long startTime = System.currentTimeMillis();
+        Rectangle queryRectangle = Geometries.rectangle(window.getXmin(), window.getYmin(), window.getXmax(), window.getYmax());
+        List<Long> result = rangeQuery(rtree,queryRectangle);
+        long endTime = System.currentTimeMillis();
+        out.collect(endTime-startTime);
     }
 
+    // 范围查询
+    public static List<Long> rangeQuery(RTree<TracingPoint, Rectangle> rTree, Rectangle queryRectangle){
+        return rTree.search(queryRectangle)
+                .map(entry -> entry.value().getId()).toList().toBlocking().single();
+    }
+
+    // 添加轨迹点到 RTree
+    public static RTree<TracingPoint, Rectangle> addTrajectoryPoint(RTree<TracingPoint, Rectangle> rTree, double x, double y, TracingPoint userData) {
+        return rTree.add(userData, Geometries.rectangle(x, y, x, y));
+    }
     public static boolean isPointInsidePolygon(TracingPoint point, List<WindowPoint> polygon) {
         int intersectCount = 0;
         for (int i = 0; i < polygon.size(); i++) {

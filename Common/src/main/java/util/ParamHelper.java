@@ -78,4 +78,8 @@ public class ParamHelper {
     public static int getQuerySize() {
         return paramTool.getInt("query_size");
     }
+
+    public static int getIndexType() {
+        return paramTool.getInt("index_type");
+    }
 }
