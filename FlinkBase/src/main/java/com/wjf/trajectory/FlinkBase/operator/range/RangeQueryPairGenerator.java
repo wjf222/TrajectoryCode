@@ -22,7 +22,7 @@ import java.util.Map;
  * Boolean:是否包含
  * Long：查询处理时长
  */
-public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, RangeQueryPair> {
+public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long> {
     private ValueState<TracingQueue> trajectoryState;
     private ValueStateDescriptor<TracingQueue> trajectoryStateDescriptor;
     private MapStateDescriptor<Window,Integer> windowStateDescriptor;
@@ -69,7 +69,7 @@ public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long,
     }
 
     @Override
-    public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, RangeQueryPair>.ReadOnlyContext ctx, Collector<RangeQueryPair> out) throws Exception {
+    public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long>.ReadOnlyContext ctx, Collector<Long> out) throws Exception {
         TracingQueue trajectory = trajectoryState.value();
         if(trajectory == null) {
             trajectory = new TracingQueue(timeWindowSize);
@@ -129,16 +129,12 @@ public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long,
 
             rangeQueryPair.setEndTimestamp(System.currentTimeMillis());
             rangeQueryPair.setContain(contain);
-            long start = System.currentTimeMillis();
-            out.collect(rangeQueryPair);
-            long end = System.currentTimeMillis();
-            if(end-start > 2)
-            System.out.println(end-start);
+            out.collect(rangeQueryPair.getEndTimestamp()-rangeQueryPair.getStartTimestamp());
         }
     }
 
     @Override
-    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window,RangeQueryPair>.Context ctx, Collector<RangeQueryPair> out) throws Exception {
+    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window,Long>.Context ctx, Collector<Long> out) throws Exception {
         BroadcastState<Window, Integer> broadcastState = ctx.getBroadcastState(windowStateDescriptor);
         broadcastState.put(window,10);
     }

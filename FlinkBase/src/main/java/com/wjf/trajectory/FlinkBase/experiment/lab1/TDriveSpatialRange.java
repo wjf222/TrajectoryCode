@@ -47,6 +47,7 @@ public class TDriveSpatialRange {
         }
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();
+        env.getConfig().enableObjectReuse();
         new TDriveSpatialRange().apply(env);
     }
 
@@ -76,7 +77,7 @@ public class TDriveSpatialRange {
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
                 .flatMap(new Dataloader())
                 .name("轨迹数据文件读入");
-        SingleOutputStreamOperator<RangeQueryPair> rangeQueryPairStream = pointStream
+        SingleOutputStreamOperator<Long> rangeQueryPairStream = pointStream
                 .keyBy(point ->point.id)
                 .connect(queryWindowStream)
                 .process(new RangeQueryPairGenerator(query_size,timeWindowSize,isIncrement))

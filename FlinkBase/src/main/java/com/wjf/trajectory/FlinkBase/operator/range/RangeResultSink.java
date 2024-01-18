@@ -9,7 +9,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RangeResultSink extends RichSinkFunction<RangeQueryPair> {
+public class RangeResultSink extends RichSinkFunction<Long> {
     public String sinkDir;
 
     public RangeResultSink(String sinkDir) {
@@ -26,20 +26,15 @@ public class RangeResultSink extends RichSinkFunction<RangeQueryPair> {
     }
 
     @Override
-    public void invoke(RangeQueryPair result, Context context) throws Exception {
+    public void invoke(Long result, Context context) throws Exception {
         super.invoke(result, context);
-        String fileName = String.format("%s.txt", result.getTracingQueueId());
+        String fileName = String.format("%s.txt","TDriveSpatialRange");
         //写入文件
         String filePath = sinkDir + fileName;
         File file = new File(filePath);
         if (!file.exists()) file.createNewFile();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file,true))) {
-            writer.write(String.format("TrajectoryId=%d,contain=%s,start=%d,end=%d,time(ms)=%d"
-                    ,result.getTracingQueueId()
-                    ,result.isContain()
-                    ,result.startTimestamp
-                    ,result.endTimestamp
-                    ,result.endTimestamp-result.startTimestamp));
+            writer.write(String.format("time(ms)=%d",result));
             writer.newLine();
             writer.write("---"); // 用分隔符隔开不同的列表
             writer.newLine();
@@ -82,8 +77,7 @@ public class RangeResultSink extends RichSinkFunction<RangeQueryPair> {
                 if (line.equals("---")) {
                     continue; // 跳过分隔符行
                 }
-                String[] split = line.split(",");
-                String cost = split[4].split("=")[1 ];
+                String cost = line.split("=")[1 ];
                 mergedList.add(Long.parseLong(cost));
             }
         } catch (IOException e) {
