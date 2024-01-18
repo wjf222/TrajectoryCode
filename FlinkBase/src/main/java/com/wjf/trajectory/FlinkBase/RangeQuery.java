@@ -1,9 +1,8 @@
 package com.wjf.trajectory.FlinkBase;
 
-import com.wjf.trajectory.FlinkBase.operator.Dataloader;
+import com.wjf.trajectory.FlinkBase.operator.similarity.Dataloader;
 import com.wjf.trajectory.FlinkBase.operator.range.RTreeRangeQuery;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
-import com.wjf.trajectory.FlinkBase.operator.range.RangeResultSink;
 import com.wjf.trajectory.FlinkBase.operator.range.XZRangeQueryProcess;
 import entity.TracingPoint;
 import indexs.commons.Window;
@@ -13,7 +12,6 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;

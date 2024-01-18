@@ -3,6 +3,7 @@ package com.wjf.trajectory.FlinkBase.operator.range;
 import com.github.davidmoten.rtree.RTree;
 import com.github.davidmoten.rtree.geometry.Rectangle;
 import entity.TracingPoint;
+import entity.WindowPoint;
 import indexs.commons.Window;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
@@ -37,13 +38,22 @@ public class RangeInfoLoader extends KeyedProcessFunction<Integer,String, Window
      */
     @Override
     public void processElement(String value, KeyedProcessFunction<Integer, String, Window>.Context ctx, Collector<Window> out) throws Exception {
-        double[] points = Arrays.stream(value.split(","))
+        String[] split = value.split(";");
+        String windowString = split[0];
+        String windowPointsString = split[1];
+        double[] points = Arrays.stream(windowString.split(","))
                 .mapToDouble(Double::parseDouble)
                 .toArray();
         Window window = new Window(points[0],points[1],points[2],points[3]);
+        double[] windowPoint = Arrays.stream(windowPointsString.split(","))
+                .mapToDouble(Double::parseDouble)
+                .toArray();
+        List<WindowPoint> list = new ArrayList<>();
+        for(int i = 0; i < windowPoint.length/2;i++){
+            list.add(new WindowPoint(windowPoint[i*2],windowPoint[i*2+1]));
+        }
+        window.setPointList(list);
         out.collect(window);
-//        windowListState.add(window);
-//        ctx.timerService().registerEventTimeTimer(ctx.timerService().currentProcessingTime()+10*1000L);
     }
 
     @Override

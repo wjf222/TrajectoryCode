@@ -1,34 +1,57 @@
 package job;
 
+import entity.TracingPoint;
+import entity.WindowPoint;
+import indexs.commons.Window;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.DoubleStream;
 
 public class RandomRangeQuery {
     public static void main(String[] args) throws IOException {
-        int queryNum = 10;
+        int queryNum = 100;
+        int numVertices = 10;
         File aggFile = new File("range_generate_auto.txt");
         aggFile.createNewFile();
         FileWriter aggWriter = new FileWriter(aggFile);
         Random random = new Random();
-        DoubleStream doublesX = random.doubles(queryNum, 116.0, 116.8);
-        DoubleStream doublesX2 = random.doubles(queryNum, 116.0, 116.8);
-        DoubleStream doublesY = random.doubles(queryNum, 39.5, 40.3);
-        DoubleStream doublesY2 = random.doubles(queryNum, 39.5, 40.3);
-        double[] randomDoublesX = doublesX.toArray();
-        double[] randomDoublesX2 = doublesX2.toArray();
-        double[] randomDoublesY = doublesY.toArray();
-        double[] randomDoublesY2 = doublesY2.toArray();
         for(int i = 0; i < queryNum;i++) {
-            double xlo = Math.min(randomDoublesX[i],randomDoublesX2[i]);
-            double ylo = Math.min(randomDoublesY[i],randomDoublesY2[i]);
-            double xHi = Math.max(randomDoublesX[i],randomDoublesX2[i]);
-            double yHi = Math.max(randomDoublesY[i],randomDoublesY2[i]);
-            aggWriter.write(String.format("%f,%f,%f,%f\r\n",xlo,ylo,xHi,yHi));
+            Window window = generateRandomPolygon(numVertices);
+            List<WindowPoint> pointList = window.getPointList();
+            aggWriter.write(
+                    String.format("%f,%f,%f,%f;%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\r\n"
+                            ,window.getXmin(),window.getYmin(),window.getXmax(),window.getYmax()
+                            ,pointList.get(0).getX(),pointList.get(0).getY(),pointList.get(1).getX(),pointList.get(1).getY()
+                            ,pointList.get(2).getX(),pointList.get(2).getY(),pointList.get(3).getX(),pointList.get(3).getY()
+                            ,pointList.get(4).getX(),pointList.get(4).getY(),pointList.get(5).getX(),pointList.get(5).getY()
+                            ,pointList.get(6).getX(),pointList.get(6).getY(),pointList.get(7).getX(),pointList.get(7).getY()
+                            ,pointList.get(8).getX(),pointList.get(8).getY(),pointList.get(9).getX(),pointList.get(9).getY()));
         }
         aggWriter.flush();
         aggWriter.close();
+    }
+
+    private static Window generateRandomPolygon(int numVertices) {
+        List<WindowPoint> points = new ArrayList<>();
+        Random random = new Random();
+        DoubleStream doublesX = random.doubles(numVertices, 116.0, 116.8);
+        DoubleStream doublesY = random.doubles(numVertices, 39.5, 40.3);
+        double[] randomDoublesX = doublesX.toArray();
+        double[] randomDoublesY = doublesY.toArray();
+        for (int i = 0; i < numVertices; i++) {
+            double x = randomDoublesX[i];
+            double y = randomDoublesY[i];
+            points.add(new WindowPoint(x, y));
+        }
+        Arrays.sort(randomDoublesX);
+        Arrays.sort(randomDoublesY);
+        Window window = new Window(randomDoublesX[0],randomDoublesY[0],randomDoublesX[numVertices-1],randomDoublesY[numVertices-1]);
+        // 排序点以形成一个闭环
+        Collections.sort(points, (a, b) -> Double.compare(a.getX(), b.getX()));
+        window.setPointList(points);
+        return window;
     }
 }

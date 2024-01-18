@@ -1,10 +1,9 @@
 package com.wjf.trajectory.FlinkBase;
 
-import com.wjf.trajectory.FlinkBase.operator.Dataloader;
+import com.wjf.trajectory.FlinkBase.operator.similarity.Dataloader;
 import com.wjf.trajectory.FlinkBase.operator.partition.CustomPartitioner;
 import com.wjf.trajectory.FlinkBase.operator.range.PartitionXZRangeQueryProcess;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
-import com.wjf.trajectory.FlinkBase.operator.range.RangeResultSink;
 import entity.TracingPoint;
 import indexs.commons.Window;
 import indexs.z2.XZ2SFC;

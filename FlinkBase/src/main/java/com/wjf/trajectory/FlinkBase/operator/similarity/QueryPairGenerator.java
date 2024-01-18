@@ -1,4 +1,4 @@
-package com.wjf.trajectory.FlinkBase.operator;
+package com.wjf.trajectory.FlinkBase.operator.similarity;
 
 import entity.QueryPair;
 import entity.QueryTraInfo;

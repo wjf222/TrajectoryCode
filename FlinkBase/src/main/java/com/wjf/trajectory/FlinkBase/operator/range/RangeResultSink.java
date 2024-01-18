@@ -28,15 +28,14 @@ public class RangeResultSink extends RichSinkFunction<RangeQueryPair> {
     @Override
     public void invoke(RangeQueryPair result, Context context) throws Exception {
         super.invoke(result, context);
-        Window window = result.getWindow();
-        String fileName = String.format("%f-%f-%f-%f.txt", window.getXmin(), window.getYmin(), window.getXmax(), window.getYmax());
+        String fileName = String.format("%s.txt", result.getTracingQueueId());
         //写入文件
         String filePath = sinkDir + fileName;
         File file = new File(filePath);
         if (!file.exists()) file.createNewFile();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file,true))) {
             writer.write(String.format("TrajectoryId=%d,contain=%s,start=%d,end=%d,time(ms)=%d"
-                    ,result.getTracingQueue().id
+                    ,result.getTracingQueueId()
                     ,result.isContain()
                     ,result.startTimestamp
                     ,result.endTimestamp
@@ -68,8 +67,9 @@ public class RangeResultSink extends RichSinkFunction<RangeQueryPair> {
         }
         //聚合搜索结果
         String aggFileName = String.format("%s0_aggregate.txt",sinkDir);
+        avg_time = total_time/count;
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(aggFileName))) {
-            writer.write(String.format("total_time=%d,total_count=%d,avg_time=%d",total_time,count,total_time/count));
+            writer.write(String.format("total_time=%d,total_count=%d,avg_time=%d",total_time,count,avg_time));
             writer.newLine();
         }
     }

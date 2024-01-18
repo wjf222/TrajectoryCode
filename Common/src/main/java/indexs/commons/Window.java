@@ -1,8 +1,12 @@
 package indexs.commons;
 
 import entity.TracingPoint;
+import entity.WindowPoint;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 由于范围查询需要提供访问的四个端点
@@ -17,6 +21,16 @@ public class Window {
     private double xmax;
     private double ymax;
 
+
+    public Window(double xmin,double ymin,double xmax,double ymax){
+        this.xmin = xmin;
+        this.ymin = ymin;
+        this.xmax = xmax;
+        this.ymax = ymax;
+        pointList = new ArrayList<>();
+    }
+    //多边形的点
+    private List<WindowPoint> pointList;
     @Override
     public int hashCode(){
         int code = 17;
