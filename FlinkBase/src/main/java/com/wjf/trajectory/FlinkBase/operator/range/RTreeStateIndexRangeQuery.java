@@ -17,18 +17,18 @@ import org.apache.flink.util.Collector;
 import java.util.List;
 import java.util.Map;
 
-public class RTreeIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long> {
+public class RTreeStateIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long> {
     private ValueState<TracingQueue> trajectoryState;
     private ValueStateDescriptor<TracingQueue> trajectoryStateDescriptor;
     private MapStateDescriptor<Window,Integer> windowStateDescriptor;
     private int query_size;
     private long timeWindowSize;
     private MapState<Window,Integer> windowCounts;
-    private transient RTree<TracingPoint, Rectangle>[] rtreeList;
     private int parallelism ;
     private int dataSize;
-    private int rtreeIndex;
-    public RTreeIndexRangeQuery(int query_size, long timeWindowSize,int dataSize) {
+    private ValueState<RTree<TracingPoint, Rectangle>> rtreeState;
+    private ValueStateDescriptor<RTree<TracingPoint, Rectangle>> rTreeDescriptor;
+    public RTreeStateIndexRangeQuery(int query_size, long timeWindowSize,int dataSize) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
         this.dataSize = dataSize;
@@ -37,6 +37,13 @@ public class RTreeIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Tr
     @Override
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
+        rTreeDescriptor =
+                new ValueStateDescriptor<RTree<TracingPoint, Rectangle>>(
+                        "rtree",
+                        TypeInformation.of(new TypeHint<RTree<TracingPoint, Rectangle>>() {}),
+                        RTree.create()
+                );
+        rtreeState = getRuntimeContext().getState(rTreeDescriptor);
         trajectoryStateDescriptor= new ValueStateDescriptor<>(
                 "trajectory",
                 TypeInformation.of(new TypeHint<TracingQueue>() {
@@ -65,11 +72,6 @@ public class RTreeIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Tr
         windowCounts = getRuntimeContext().getMapState(windowCountsDescriptor);
         parallelism = getRuntimeContext().getNumberOfParallelSubtasks();
         int nums = 1000*2/parallelism;
-        rtreeList = new RTree[nums];
-        for(int i = 0; i < nums;i++){
-            rtreeList[i] = RTree.create();
-        }
-        rtreeIndex = 0;
     }
 
     @Override
@@ -82,9 +84,11 @@ public class RTreeIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Tr
         trajectory.EnCircularQueue(point);
         trajectoryState.update(trajectory);
         long startTime = System.currentTimeMillis();
-        rtreeList[rtreeIndex] = addTrajectoryPoint(rtreeList[rtreeIndex], point.x, point.y, point);
-        ReadOnlyBroadcastState<Window, Integer> windows = ctx.getBroadcastState(windowStateDescriptor);
-        if(rtreeList[rtreeIndex].size() > (dataSize*query_size/(parallelism*rtreeList.length))) {
+        RTree<TracingPoint, Rectangle> rTree = rtreeState.value();
+        rTree = addTrajectoryPoint(rTree,point.getX(),point.getY(),point);
+        rtreeState.update(rTree);
+        if(rTree.size() > query_size){
+            ReadOnlyBroadcastState<Window, Integer> windows = ctx.getBroadcastState(windowStateDescriptor);
             for (Map.Entry<Window, Integer> windowIntegerEntry : windows.immutableEntries()) {
                 Window window = windowIntegerEntry.getKey();
                 if(windowCounts.contains(window)){
@@ -92,16 +96,13 @@ public class RTreeIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Tr
                 }
                 Rectangle queryRectangle = Geometries.rectangle(window.getXmin(), window.getYmin(), window.getXmax(), window.getYmax());
                 for(int i = 0; i < windowIntegerEntry.getValue();i++) {
-                    rangeQuery(rtreeList[rtreeIndex], queryRectangle);
+                    rangeQuery(rTree, queryRectangle);
                 }
                 windowCounts.put(window,windowIntegerEntry.getValue());
             }
         }
         long endTime = System.currentTimeMillis();
-        System.out.printf("updateTime:%d  rtreeSize:%d\r\n",endTime-startTime,rtreeList[rtreeIndex].size());
         out.collect(endTime-startTime);
-        rtreeIndex++;
-        rtreeIndex = rtreeIndex/rtreeList.length;
 //        System.out.printf("endTime:%d",endTime-startTime);
     }
 

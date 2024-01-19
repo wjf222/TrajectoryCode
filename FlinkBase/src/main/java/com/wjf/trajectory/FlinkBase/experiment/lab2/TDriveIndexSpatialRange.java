@@ -1,9 +1,6 @@
-package com.wjf.trajectory.FlinkBase.experiment.lab1;
+package com.wjf.trajectory.FlinkBase.experiment.lab2;
 
-import com.wjf.trajectory.FlinkBase.operator.range.RTreeIndexRangeQuery;
-import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
-import com.wjf.trajectory.FlinkBase.operator.range.RangeResultSink;
-import com.wjf.trajectory.FlinkBase.operator.range.XZIndexRangeQuery;
+import com.wjf.trajectory.FlinkBase.operator.range.*;
 import com.wjf.trajectory.FlinkBase.operator.similarity.Dataloader;
 import com.wjf.trajectory.FlinkBase.operator.util.TextSourceFunction;
 import entity.TracingPoint;
@@ -63,7 +60,7 @@ public class TDriveIndexSpatialRange {
                 break;
             case 2:
                 index = "rtree";
-                rangeMeasure = new RTreeIndexRangeQuery(query_size,timeWindowSize,dataSize);
+                rangeMeasure = new RTreeStateIndexRangeQuery(query_size,timeWindowSize,dataSize);
                 break;
             default:
                 throw new RuntimeException("No Such index Method");
