@@ -1,7 +1,7 @@
 package com.wjf.trajectory.FlinkBase.experiment.lab3;
 
-import com.wjf.trajectory.FlinkBase.operator.partition.RangeResultSink;
-import com.wjf.trajectory.FlinkBase.operator.partition.XZIndexRangeQuery;
+import com.wjf.trajectory.FlinkBase.operator.partition.PartitionRangeResultSink;
+import com.wjf.trajectory.FlinkBase.operator.partition.PartitionXZIndexRangeQuery;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
 import com.wjf.trajectory.FlinkBase.operator.similarity.Dataloader;
 import com.wjf.trajectory.FlinkBase.operator.util.TextSourceFunction;
@@ -59,7 +59,7 @@ public class TDriveIndexSpatialRange {
         switch (indexType){
             case 1:
                 index = "xz2SFC";
-                rangeMeasure = new XZIndexRangeQuery(query_size,timeWindowSize,isIncrement,xz2SFC);
+                rangeMeasure = new PartitionXZIndexRangeQuery(query_size,timeWindowSize,isIncrement,xz2SFC);
                 break;
             default:
                 throw new RuntimeException("No Such index Method");
@@ -100,7 +100,7 @@ public class TDriveIndexSpatialRange {
                 .connect(queryWindowStream)
                 .process(rangeMeasure)
                 .name("生成范围查询");
-        rangeQueryPairStream.addSink(new RangeResultSink(sinkDir));
+        rangeQueryPairStream.addSink(new PartitionRangeResultSink(sinkDir));
         env.execute(String.format("TrajectoryCode %s %s Range Query", measure,index));
     }
 }

@@ -14,6 +14,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.util.Collector;
+import util.TestTool;
 
 import java.util.*;
 
@@ -23,7 +24,7 @@ import java.util.*;
  * Boolean:是否包含
  * Long：查询处理时长
  */
-public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<String,Long>> {
+public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<String,Long>> {
     private ValueState<TracingQueue> trajectoryState;
     private ValueStateDescriptor<TracingQueue> trajectoryStateDescriptor;
     private MapStateDescriptor<Window,Integer> windowStateDescriptor;
@@ -34,7 +35,7 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
     private boolean increment;
     private Map<Window,List<IndexRange>> windowIndexRangeMap;
     private XZ2SFC xz2SFC;
-    public XZIndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC) {
+    public PartitionXZIndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
         this.increment = increment;
@@ -106,7 +107,7 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
                 List<IndexRange> ranges = xz2SFC.ranges(windowList, Optional.empty());
                 windowIndexRangeMap.put(window,ranges);
             }
-            long startTime = System.currentTimeMillis();
+            long startTime = TestTool.currentMicrosecond();
             int count = 0;
             if(windowCounts.contains(window)) {
                 count = windowCounts.get(window);
@@ -162,7 +163,7 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
                 }
             }
             windowContain.put(window,contain);
-            long endTime = System.currentTimeMillis();
+            long endTime = TestTool.currentMicrosecond();
             out.collect(Tuple2.of(getRuntimeContext().getTaskNameWithSubtasks(),endTime-startTime));
         }
     }

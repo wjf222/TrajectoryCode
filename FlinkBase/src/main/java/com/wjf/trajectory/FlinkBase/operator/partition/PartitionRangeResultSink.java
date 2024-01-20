@@ -8,10 +8,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RangeResultSink extends RichSinkFunction<Tuple2<String,Long>> {
+public class PartitionRangeResultSink extends RichSinkFunction<Tuple2<String,Long>> {
     public String sinkDir;
 
-    public RangeResultSink(String sinkDir) {
+    public PartitionRangeResultSink(String sinkDir) {
         this.sinkDir = sinkDir;
     }
 
@@ -27,13 +27,15 @@ public class RangeResultSink extends RichSinkFunction<Tuple2<String,Long>> {
     @Override
     public void invoke(Tuple2<String,Long> result, Context context) throws Exception {
         super.invoke(result, context);
-        String fileName = String.format("%s.txt","TDriveSpatialRange");
+        String subTask = result.f0;
+        long endTime = result.f1;
+        String fileName = String.format("%s.txt",subTask);
         //写入文件
         String filePath = sinkDir + fileName;
         File file = new File(filePath);
         if (!file.exists()) file.createNewFile();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file,true))) {
-            writer.write(String.format("time(ms)=%d",result));
+            writer.write(String.format("time(us)=%d",endTime));
             writer.newLine();
             writer.write("---"); // 用分隔符隔开不同的列表
             writer.newLine();
@@ -44,27 +46,25 @@ public class RangeResultSink extends RichSinkFunction<Tuple2<String,Long>> {
     public void close() throws Exception {
         super.close();
         File sinkDirFile = new File(sinkDir);
-        List<String> result = new ArrayList<>();
         long count = 0;
         long total_time = 0;
-        long avg_time = 0;
-        for (File sinkFile : sinkDirFile.listFiles()) {
-            if (sinkFile.getName().contains("0_aggregate.txt")) continue;
-            List<Long> mergedList = readListsFromFile(sinkFile.getPath());
-            if(mergedList.size() != 0) {
-                // 结果去重
-                for(long time:mergedList){
-                    count++;
-                    total_time = total_time+time;
-                }
-            }
-        }
         //聚合搜索结果
         String aggFileName = String.format("%s0_aggregate.txt",sinkDir);
-        avg_time = total_time/count;
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(aggFileName))) {
-            writer.write(String.format("total_time=%d,total_count=%d,avg_time=%d",total_time,count,avg_time));
-            writer.newLine();
+            for (File sinkFile : sinkDirFile.listFiles()) {
+                if (sinkFile.getName().contains("0_aggregate.txt")) continue;
+                List<Long> mergedList = readListsFromFile(sinkFile.getPath());
+                if(mergedList.size() != 0) {
+                    // 结果去重
+                    for(long time:mergedList){
+                        count++;
+                        total_time = total_time+time;
+                    }
+                }
+                long avg_time = total_time/count;
+                writer.write(String.format("subTask:%s,total_time(ms)=%d,total_count=%d,avg_time(us)=%d",sinkFile.getName(),total_time/1000,count,avg_time));
+                writer.newLine();
+            }
         }
     }
 
