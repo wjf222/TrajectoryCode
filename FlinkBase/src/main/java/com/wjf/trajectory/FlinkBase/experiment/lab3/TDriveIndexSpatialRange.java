@@ -1,9 +1,8 @@
 package com.wjf.trajectory.FlinkBase.experiment.lab3;
 
-import com.wjf.trajectory.FlinkBase.operator.range.RTreeStateIndexRangeQuery;
+import com.wjf.trajectory.FlinkBase.operator.partition.RangeResultSink;
+import com.wjf.trajectory.FlinkBase.operator.partition.XZIndexRangeQuery;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
-import com.wjf.trajectory.FlinkBase.operator.range.RangeResultSink;
-import com.wjf.trajectory.FlinkBase.operator.range.XZIndexRangeQuery;
 import com.wjf.trajectory.FlinkBase.operator.similarity.Dataloader;
 import com.wjf.trajectory.FlinkBase.operator.util.TextSourceFunction;
 import entity.TracingPoint;
@@ -13,6 +12,7 @@ import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -22,7 +22,7 @@ import util.ParamHelper;
 public class TDriveIndexSpatialRange {
     public static String dataPath;
     public static String queryPath;
-    public static KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long> rangeMeasure;
+    public static KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<String,Long>> rangeMeasure;
     public static String sinkDir;
     private static String measure;
     public static int query_size;
@@ -61,10 +61,6 @@ public class TDriveIndexSpatialRange {
                 index = "xz2SFC";
                 rangeMeasure = new XZIndexRangeQuery(query_size,timeWindowSize,isIncrement,xz2SFC);
                 break;
-            case 2:
-                index = "rtree";
-                rangeMeasure = new RTreeStateIndexRangeQuery(query_size,timeWindowSize,dataSize);
-                break;
             default:
                 throw new RuntimeException("No Such index Method");
         }
@@ -99,7 +95,7 @@ public class TDriveIndexSpatialRange {
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
                 .flatMap(new Dataloader())
                 .name("轨迹数据文件读入");
-        SingleOutputStreamOperator<Long> rangeQueryPairStream = pointStream
+        SingleOutputStreamOperator<Tuple2<String,Long>> rangeQueryPairStream = pointStream
                 .keyBy(point ->point.id)
                 .connect(queryWindowStream)
                 .process(rangeMeasure)
