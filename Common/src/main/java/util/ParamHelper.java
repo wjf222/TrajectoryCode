@@ -82,4 +82,12 @@ public class ParamHelper {
     public static int getIndexType() {
         return paramTool.getInt("index_type");
     }
+
+    public static String getJobManagerHost() {
+        return paramTool.getRequired("jobManager_host");
+    }
+
+    public static String getJobManagerPort() {
+        return paramTool.getRequired("jobManager_port");
+    }
 }

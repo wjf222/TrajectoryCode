@@ -19,7 +19,7 @@ public class PartitionRangeResultSink extends RichSinkFunction<Tuple2<Integer,Lo
     @Override
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
-
+        getRuntimeContext().getJobId();
         File sinkDirFile = new File(sinkDir);
         deleteDirRecursively(sinkDirFile);
         if (!sinkDirFile.exists()) sinkDirFile.mkdirs();
@@ -93,13 +93,14 @@ public class PartitionRangeResultSink extends RichSinkFunction<Tuple2<Integer,Lo
 
             // 每一个slot与标准值的偏差
             final long mean_time = total_time_avg;
-            final long mean_count = total_time_avg;
+            final long mean_count = total_count_avg;
             List<Double> sdMeanTimeDouble = timeList.stream().map(time -> Math.abs((double)(time-mean_time)/(double) sd_time)).collect(Collectors.toList());
-            List<Double> sdMeanCountDouble = countList.stream().map(count ->Math.abs ((double)(count-mean_count)/(double) sd_time)).collect(Collectors.toList());
+            List<Double> sdMeanCountDouble = countList.stream().map(count ->Math.abs ((double)(count-mean_count)/(double) sd_count)).collect(Collectors.toList());
 
             double sumSDTime = sdMeanTimeDouble.stream().mapToDouble(time -> time).sum();
             double sumSDCount = sdMeanCountDouble.stream().mapToDouble(time -> time).sum();
-            writer.write(String.format("subTaskSum:%d,sumSDDiffTime(ms)=%.2f,sumSDDiffCount=%d", list.size(), sumSDTime,sumSDCount));
+            writer.write(String.format("subTaskSum:%d,sumSDDiffTime(ms)=%.3f,sumSDDiffCount=%.3f", list.size(), sumSDTime,sumSDCount));
+            writer.newLine();
             List<String> timeStringList = timeList.stream().map(String::valueOf).collect(Collectors.toList());
             List<String> countStringList = countList.stream().map(String::valueOf).collect(Collectors.toList());
             writer.write(String.format("total_time:%s",String.join(",",timeStringList)));
@@ -110,7 +111,7 @@ public class PartitionRangeResultSink extends RichSinkFunction<Tuple2<Integer,Lo
             List<String> sdMeanCountString = sdMeanCountDouble.stream().map(String::valueOf).collect(Collectors.toList());
             writer.write(String.format("sdMeanTime:%s",String.join(",",sdMeanTimeString)));
             writer.newLine();
-            writer.write(String.format("sdMeanTime:%s",String.join(",",sdMeanCountString)));
+            writer.write(String.format("sdMeanCount:%s",String.join(",",sdMeanCountString)));
             writer.newLine();
             for(int i = 0; i < list.size();i++) {
                 writer.write(String.format("subTaskIndex:%s,total_time(ms)=%d,total_count=%d,avg_time(us)=%d", i, list.get(i).f0 / 1000, list.get(i).f1, list.get(i).f2));

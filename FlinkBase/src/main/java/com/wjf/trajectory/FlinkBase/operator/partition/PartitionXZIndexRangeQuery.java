@@ -12,6 +12,7 @@ import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.util.Collector;
 import util.TestTool;
@@ -35,6 +36,8 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
     private boolean increment;
     private Map<Window,List<IndexRange>> windowIndexRangeMap;
     private XZ2SFC xz2SFC;
+    private transient Counter pointsCounter;
+    private transient Counter calTimeCounter;
     public PartitionXZIndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
@@ -73,6 +76,14 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
                 BasicTypeInfo.INT_TYPE_INFO
         );
         String taskNameWithSubtasks = getRuntimeContext().getTaskNameWithSubtasks();
+        this.pointsCounter = getRuntimeContext()
+                .getMetricGroup()
+                .addGroup("CustomPartition")
+                .counter("PointsCounter");
+        this.calTimeCounter = getRuntimeContext()
+                .getMetricGroup()
+                .addGroup("CustomPartition")
+                .counter("CalTimeCounter");
     }
 
     @Override
@@ -164,6 +175,8 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
             }
             windowContain.put(window,contain);
             long endTime = TestTool.currentMicrosecond();
+            this.pointsCounter.inc();
+            this.calTimeCounter.inc(endTime-startTime);
             out.collect(Tuple2.of(getRuntimeContext().getIndexOfThisSubtask(),endTime-startTime));
         }
     }

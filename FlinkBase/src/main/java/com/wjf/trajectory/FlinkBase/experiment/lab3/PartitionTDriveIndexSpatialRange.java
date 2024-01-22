@@ -1,5 +1,7 @@
 package com.wjf.trajectory.FlinkBase.experiment.lab3;
 
+import com.wjf.trajectory.FlinkBase.operator.partition.CustomKeySelector;
+import com.wjf.trajectory.FlinkBase.operator.partition.CustomPartitioner;
 import com.wjf.trajectory.FlinkBase.operator.partition.PartitionRangeResultSink;
 import com.wjf.trajectory.FlinkBase.operator.partition.PartitionXZIndexRangeQuery;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
@@ -13,6 +15,8 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -31,6 +35,8 @@ public class PartitionTDriveIndexSpatialRange {
     private static XZ2SFC xz2SFC;
     private static  int indexType;
     private static String index;
+    private static String host;
+    private static String port;
     private static int dataSize;
     public static void main(String[] args) throws Exception {
         xz2SFC = new XZ2SFC((short) 10,116.0,116.8,39.5,40.3);
@@ -42,6 +48,8 @@ public class PartitionTDriveIndexSpatialRange {
         timeWindowSize = ParamHelper.getTimeWindowSize();
         indexType = ParamHelper.getIndexType();
         dataSize = ParamHelper.getDataSize();
+        host = ParamHelper.getJobManagerHost();
+        port = ParamHelper.getJobManagerPort();
         int range_measure_op = ParamHelper.getRangeMeasure();
         switch (range_measure_op) {
             case 1:
@@ -71,6 +79,7 @@ public class PartitionTDriveIndexSpatialRange {
     }
 
     public static StreamExecutionEnvironment initEnv() {
+//        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         return env;
     }
@@ -93,14 +102,16 @@ public class PartitionTDriveIndexSpatialRange {
                 .readTextFile(dataPath)
                 // 分发轨迹流到不同节点
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
-                .flatMap(new Dataloader())
+                .flatMap(new Dataloader(host,port))
                 .name("轨迹数据文件读入");
         SingleOutputStreamOperator<Tuple2<Integer,Long>> rangeQueryPairStream = pointStream
+                .partitionCustom(new CustomPartitioner<>(),new CustomKeySelector())
                 .keyBy(point ->point.id)
                 .connect(queryWindowStream)
                 .process(rangeMeasure)
-                .name("生成范围查询");
+                .name("PartitionRangeQuery");
         rangeQueryPairStream.addSink(new PartitionRangeResultSink(sinkDir));
         env.execute(String.format("TrajectoryCode %s %s Range Query", measure,index));
+        System.out.print(1);
     }
 }
