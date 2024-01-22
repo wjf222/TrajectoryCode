@@ -24,7 +24,7 @@ import java.util.*;
  * Boolean:是否包含
  * Long：查询处理时长
  */
-public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<String,Long>> {
+public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<Integer,Long>> {
     private ValueState<TracingQueue> trajectoryState;
     private ValueStateDescriptor<TracingQueue> trajectoryStateDescriptor;
     private MapStateDescriptor<Window,Integer> windowStateDescriptor;
@@ -76,7 +76,7 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
     }
 
     @Override
-    public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<String,Long>>.ReadOnlyContext ctx, Collector<Tuple2<String,Long>> out) throws Exception {
+    public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<Integer,Long>>.ReadOnlyContext ctx, Collector<Tuple2<Integer,Long>> out) throws Exception {
         TracingQueue trajectory = trajectoryState.value();
         if(trajectory == null) {
             trajectory = new TracingQueue(timeWindowSize);
@@ -164,12 +164,12 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
             }
             windowContain.put(window,contain);
             long endTime = TestTool.currentMicrosecond();
-            out.collect(Tuple2.of(getRuntimeContext().getTaskNameWithSubtasks(),endTime-startTime));
+            out.collect(Tuple2.of(getRuntimeContext().getIndexOfThisSubtask(),endTime-startTime));
         }
     }
 
     @Override
-    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window,Tuple2<String,Long>>.Context ctx, Collector<Tuple2<String,Long>> out) throws Exception {
+    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window,Tuple2<Integer,Long>>.Context ctx, Collector<Tuple2<Integer,Long>> out) throws Exception {
         BroadcastState<Window, Integer> broadcastState = ctx.getBroadcastState(windowStateDescriptor);
         broadcastState.put(window,10);
     }

@@ -19,10 +19,10 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import util.ParamHelper;
 
-public class TDriveIndexSpatialRange {
+public class PartitionTDriveIndexSpatialRange {
     public static String dataPath;
     public static String queryPath;
-    public static KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<String,Long>> rangeMeasure;
+    public static KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<Integer,Long>> rangeMeasure;
     public static String sinkDir;
     private static String measure;
     public static int query_size;
@@ -67,7 +67,7 @@ public class TDriveIndexSpatialRange {
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();
         env.getConfig().enableObjectReuse();
-        new TDriveIndexSpatialRange().apply(env);
+        new PartitionTDriveIndexSpatialRange().apply(env);
     }
 
     public static StreamExecutionEnvironment initEnv() {
@@ -95,7 +95,7 @@ public class TDriveIndexSpatialRange {
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
                 .flatMap(new Dataloader())
                 .name("轨迹数据文件读入");
-        SingleOutputStreamOperator<Tuple2<String,Long>> rangeQueryPairStream = pointStream
+        SingleOutputStreamOperator<Tuple2<Integer,Long>> rangeQueryPairStream = pointStream
                 .keyBy(point ->point.id)
                 .connect(queryWindowStream)
                 .process(rangeMeasure)
