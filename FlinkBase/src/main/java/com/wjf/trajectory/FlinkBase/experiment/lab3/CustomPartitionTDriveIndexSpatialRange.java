@@ -3,21 +3,19 @@ package com.wjf.trajectory.FlinkBase.experiment.lab3;
 import com.wjf.trajectory.FlinkBase.operator.partition.*;
 import com.wjf.trajectory.FlinkBase.operator.range.RangeInfoLoader;
 import com.wjf.trajectory.FlinkBase.operator.util.TextSourceFunction;
-import entity.TracingPoint;
-import indexs.commons.Window;
-import indexs.z2.XZ2SFC;
+import com.wjf.trajectory.common.entity.TracingPoint;
+import com.wjf.trajectory.common.indexs.commons.Window;
+import com.wjf.trajectory.common.indexs.z2.XZ2SFC;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
-import util.ParamHelper;
+import com.wjf.trajectory.common.util.ParamHelper;
 
 public class CustomPartitionTDriveIndexSpatialRange {
     public static String dataPath;
@@ -37,6 +35,7 @@ public class CustomPartitionTDriveIndexSpatialRange {
     private static int dataSize;
     public static void main(String[] args) throws Exception {
         xz2SFC = new XZ2SFC((short) 10,116.0,116.8,39.5,40.3);
+
         ParamHelper.initFromArgs(args);
         sinkDir = ParamHelper.getSinkDir();
         dataPath = ParamHelper.getDataPath();
@@ -45,8 +44,8 @@ public class CustomPartitionTDriveIndexSpatialRange {
         timeWindowSize = ParamHelper.getTimeWindowSize();
         indexType = ParamHelper.getIndexType();
         dataSize = ParamHelper.getDataSize();
-        host = ParamHelper.getJobManagerHost();
-        port = ParamHelper.getJobManagerPort();
+//        host = ParamHelper.getJobManagerHost();
+//        port = ParamHelper.getJobManagerPort();
         int range_measure_op = ParamHelper.getRangeMeasure();
         switch (range_measure_op) {
             case 1:
@@ -76,12 +75,12 @@ public class CustomPartitionTDriveIndexSpatialRange {
     }
 
     public static StreamExecutionEnvironment initEnv() {
-        Configuration configuration = new Configuration();
-        configuration.setInteger(RestOptions.PORT,8081);
-////        configuration.set(RestOptions.ADDRESS,"127.0.0.1");
-////        configuration.set(RestOptions.BIND_PORT,"8081");
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(configuration);
-//        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+//        Configuration configuration = new Configuration();
+//        configuration.setInteger(RestOptions.PORT,8081);
+//        configuration.set(RestOptions.ADDRESS,"127.0.0.1");
+//        configuration.set(RestOptions.BIND_PORT,"8081");
+//        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(configuration);
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         return env;
     }
 

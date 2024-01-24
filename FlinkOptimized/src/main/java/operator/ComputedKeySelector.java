@@ -1,6 +1,6 @@
 package operator;
 
-import entity.QueryPair;
+import com.wjf.trajectory.common.entity.QueryPair;
 import org.apache.flink.api.java.functions.KeySelector;
 
 public class ComputedKeySelector implements KeySelector<QueryPair, Long> {

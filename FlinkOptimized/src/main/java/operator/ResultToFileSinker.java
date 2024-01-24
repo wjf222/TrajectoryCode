@@ -1,6 +1,6 @@
 package operator;
 
-import entity.QueryPair;
+import com.wjf.trajectory.common.entity.QueryPair;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 

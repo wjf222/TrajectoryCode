@@ -1,8 +1,7 @@
 package job;
 
-import entity.TracingPoint;
-import entity.WindowPoint;
-import indexs.commons.Window;
+import com.wjf.trajectory.common.entity.WindowPoint;
+import com.wjf.trajectory.common.indexs.commons.Window;
 
 import java.io.File;
 import java.io.FileWriter;

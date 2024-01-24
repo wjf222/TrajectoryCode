@@ -1,9 +1,9 @@
 package com.wjf.trajectory.FlinkBase.operator.similarity;
 
-import entity.QueryInfo;
-import entity.QueryTraInfo;
-import entity.TracingPoint;
-import entity.TracingQueue;
+import com.wjf.trajectory.common.entity.QueryInfo;
+import com.wjf.trajectory.common.entity.QueryTraInfo;
+import com.wjf.trajectory.common.entity.TracingPoint;
+import com.wjf.trajectory.common.entity.TracingQueue;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;

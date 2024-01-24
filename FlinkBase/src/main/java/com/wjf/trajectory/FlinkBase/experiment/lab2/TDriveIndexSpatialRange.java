@@ -3,9 +3,9 @@ package com.wjf.trajectory.FlinkBase.experiment.lab2;
 import com.wjf.trajectory.FlinkBase.operator.range.*;
 import com.wjf.trajectory.FlinkBase.operator.similarity.Dataloader;
 import com.wjf.trajectory.FlinkBase.operator.util.TextSourceFunction;
-import entity.TracingPoint;
-import indexs.commons.Window;
-import indexs.z2.XZ2SFC;
+import com.wjf.trajectory.common.entity.TracingPoint;
+import com.wjf.trajectory.common.indexs.commons.Window;
+import com.wjf.trajectory.common.indexs.z2.XZ2SFC;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -14,7 +14,7 @@ import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
-import util.ParamHelper;
+import com.wjf.trajectory.common.util.ParamHelper;
 
 public class TDriveIndexSpatialRange {
     public static String dataPath;

@@ -1,12 +1,13 @@
 package com.wjf.trajectory.FlinkBase.experiment.lab1;
 
-import Partition.QueryPairKeySelector;
+import com.wjf.trajectory.common.Partition.QueryPairKeySelector;
 import com.wjf.trajectory.FlinkBase.operator.job.SimilarCalculator;
 import com.wjf.trajectory.FlinkBase.operator.similarity.*;
-import entity.QueryInfo;
-import entity.QueryPair;
-import entity.QueryTraInfo;
-import entity.TracingPoint;
+import com.wjf.trajectory.common.entity.QueryInfo;
+import com.wjf.trajectory.common.entity.QueryPair;
+import com.wjf.trajectory.common.entity.QueryTraInfo;
+import com.wjf.trajectory.common.entity.TracingPoint;
+import com.wjf.trajectory.common.service.similarity.*;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -14,9 +15,8 @@ import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.OutputTag;
-import service.Similarity;
-import service.similarity.*;
-import util.ParamHelper;
+import com.wjf.trajectory.common.service.Similarity;
+import com.wjf.trajectory.common.util.ParamHelper;
 
 public class TDriveSimilarityTest {
     public static String dataPath;

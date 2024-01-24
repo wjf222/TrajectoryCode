@@ -1,6 +1,6 @@
 package com.wjf.trajectory.FlinkBase.operator.similarity;
 
-import entity.QueryInfo;
+import com.wjf.trajectory.common.entity.QueryInfo;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.configuration.Configuration;

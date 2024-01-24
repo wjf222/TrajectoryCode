@@ -1,8 +1,9 @@
-import Partition.QueryPairKeySelector;
-import entity.QueryInfo;
-import entity.QueryPair;
-import entity.QueryTraInfo;
-import entity.TracingPoint;
+import com.wjf.trajectory.common.Partition.QueryPairKeySelector;
+import com.wjf.trajectory.common.entity.QueryInfo;
+import com.wjf.trajectory.common.entity.QueryPair;
+import com.wjf.trajectory.common.entity.QueryTraInfo;
+import com.wjf.trajectory.common.entity.TracingPoint;
+import com.wjf.trajectory.common.service.Similarity;
 import operator.*;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -12,11 +13,11 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTime
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.OutputTag;
 import service.*;
-import service.similarity.DTW;
-import service.similarity.EDR;
-import service.similarity.ERP;
-import service.similarity.LCSS;
-import util.ParamHelper;
+import com.wjf.trajectory.common.service.similarity.DTW;
+import com.wjf.trajectory.common.service.similarity.EDR;
+import com.wjf.trajectory.common.service.similarity.ERP;
+import com.wjf.trajectory.common.service.similarity.LCSS;
+import com.wjf.trajectory.common.util.ParamHelper;
 
 
 public class Main {

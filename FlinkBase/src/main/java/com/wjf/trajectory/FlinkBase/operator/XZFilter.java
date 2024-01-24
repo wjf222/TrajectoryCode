@@ -1,6 +1,6 @@
 package com.wjf.trajectory.FlinkBase.operator;
 
-import entity.QueryPair;
+import com.wjf.trajectory.common.entity.QueryPair;
 import org.apache.flink.api.common.functions.RichFilterFunction;
 
 public class XZFilter extends RichFilterFunction<QueryPair> {

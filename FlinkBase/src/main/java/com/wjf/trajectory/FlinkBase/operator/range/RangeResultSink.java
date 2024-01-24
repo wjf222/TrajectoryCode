@@ -1,7 +1,5 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
-import entity.RangeQueryPair;
-import indexs.commons.Window;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 

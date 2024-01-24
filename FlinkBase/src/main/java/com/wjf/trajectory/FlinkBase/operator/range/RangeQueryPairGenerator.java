@@ -1,10 +1,10 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
-import entity.RangeQueryPair;
-import entity.TracingPoint;
-import entity.TracingQueue;
-import entity.WindowPoint;
-import indexs.commons.Window;
+import com.wjf.trajectory.common.entity.RangeQueryPair;
+import com.wjf.trajectory.common.entity.TracingPoint;
+import com.wjf.trajectory.common.entity.TracingQueue;
+import com.wjf.trajectory.common.entity.WindowPoint;
+import com.wjf.trajectory.common.indexs.commons.Window;
 import org.apache.flink.api.common.state.*;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;

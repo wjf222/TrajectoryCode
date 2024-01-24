@@ -1,6 +1,6 @@
 package operator;
 
-import entity.QueryTraInfo;
+import com.wjf.trajectory.common.entity.QueryTraInfo;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.util.Collector;
 

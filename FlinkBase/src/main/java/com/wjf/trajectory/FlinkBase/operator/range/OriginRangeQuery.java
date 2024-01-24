@@ -1,7 +1,7 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
-import entity.RangeQueryPair;
-import entity.TracingPoint;
+import com.wjf.trajectory.common.entity.RangeQueryPair;
+import com.wjf.trajectory.common.entity.TracingPoint;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 

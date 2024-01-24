@@ -4,7 +4,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
-import util.math.Tools;
+import com.wjf.trajectory.common.util.math.Tools;
 
 import java.io.*;
 import java.util.*;

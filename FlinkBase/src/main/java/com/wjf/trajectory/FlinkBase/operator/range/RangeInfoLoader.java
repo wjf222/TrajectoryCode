@@ -1,13 +1,9 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
-import com.github.davidmoten.rtree.RTree;
-import com.github.davidmoten.rtree.geometry.Rectangle;
-import entity.TracingPoint;
-import entity.WindowPoint;
-import indexs.commons.Window;
+import com.wjf.trajectory.common.entity.WindowPoint;
+import com.wjf.trajectory.common.indexs.commons.Window;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
-import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;

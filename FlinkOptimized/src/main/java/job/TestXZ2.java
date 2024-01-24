@@ -1,8 +1,8 @@
 package job;
 
-import indexs.IndexRange;
-import indexs.commons.Window;
-import indexs.z2.XZ2SFC;
+import com.wjf.trajectory.common.indexs.IndexRange;
+import com.wjf.trajectory.common.indexs.commons.Window;
+import com.wjf.trajectory.common.indexs.z2.XZ2SFC;
 
 import java.util.ArrayList;
 import java.util.List;

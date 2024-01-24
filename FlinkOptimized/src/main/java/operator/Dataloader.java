@@ -1,6 +1,6 @@
 package operator;
 
-import entity.TracingPoint;
+import com.wjf.trajectory.common.entity.TracingPoint;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.util.Collector;
 

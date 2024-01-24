@@ -1,25 +1,15 @@
 package com.wjf.trajectory.FlinkBase.operator.range;
 
-import com.github.davidmoten.rtree.RTree;
-import com.github.davidmoten.rtree.geometry.Geometries;
-import com.github.davidmoten.rtree.geometry.Rectangle;
-import entity.TracingPoint;
-import entity.TracingQueue;
-import indexs.IndexRange;
-import indexs.commons.Window;
-import indexs.z2.XZ2SFC;
-import org.apache.flink.api.common.state.MapState;
-import org.apache.flink.api.common.state.MapStateDescriptor;
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
-import org.apache.flink.api.common.typeinfo.TypeHint;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
+import com.wjf.trajectory.common.entity.TracingPoint;
+import com.wjf.trajectory.common.entity.TracingQueue;
+import com.wjf.trajectory.common.indexs.IndexRange;
+import com.wjf.trajectory.common.indexs.commons.Window;
+import com.wjf.trajectory.common.indexs.z2.XZ2SFC;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.Counter;
 import org.apache.flink.metrics.MetricGroup;
-import org.apache.flink.runtime.state.KeyedStateFunction;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
-import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.util.Collector;
 
 import java.util.*;

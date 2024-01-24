@@ -1,6 +1,6 @@
 package com.wjf.trajectory.FlinkBase.operator.similarity;
 
-import entity.QueryPair;
+import com.wjf.trajectory.common.entity.QueryPair;
 import org.apache.flink.api.common.functions.ReduceFunction;
 
 public class ResultReducer implements ReduceFunction<QueryPair> {
