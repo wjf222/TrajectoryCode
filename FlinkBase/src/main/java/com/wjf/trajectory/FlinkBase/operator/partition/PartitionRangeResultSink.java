@@ -4,6 +4,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import util.math.Tools;
 
 import java.io.*;
 import java.util.*;
@@ -82,12 +83,12 @@ public class PartitionRangeResultSink extends RichSinkFunction<Tuple2<Integer,Lo
                 timeList.add(list.get(i).f0/1000);
                 countList.add(list.get(i).f1);
             }
-            total_time_avg = getMean(timeList);
-            total_count_avg = getMean(countList);
+            total_time_avg = Tools.getMean(timeList);
+            total_count_avg = Tools.getMean(countList);
             writer.write(String.format("subTaskSum:%d,total_time_avg(ms)=%d,total_count_avg=%d", list.size(), total_time_avg,total_count_avg));
             writer.newLine();
-            final long sd_time = getStandardDeviation(timeList);
-            final long sd_count = getStandardDeviation(countList);
+            final long sd_time = Tools.getStandardDeviation(timeList);
+            final long sd_count = Tools.getStandardDeviation(countList);
             writer.write(String.format("subTaskSum:%d,sd_time(ms)=%d,sd_count=%d", list.size(), sd_time,sd_count));
             writer.newLine();
 
@@ -119,24 +120,7 @@ public class PartitionRangeResultSink extends RichSinkFunction<Tuple2<Integer,Lo
             }
         }
     }
-    public static long getStandardDeviation(List<Long> data) {
-        long mean = getMean(data);
-        long sum = 0L;
-        for (long num : data) {
-            sum += Math.pow(num - mean, 2);
-        }
-        long sd = (long) Math.sqrt(sum / (data.size() - 1));
-        return sd;
-    }
 
-    public static long getMean(List<Long> data) {
-        long sum = 0L;
-        for (long num : data) {
-            sum += num;
-        }
-        long mean = sum / data.size();
-        return mean;
-    }
     public static List<Long> readListsFromFile(String filename) {
         List<Long> mergedList = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {

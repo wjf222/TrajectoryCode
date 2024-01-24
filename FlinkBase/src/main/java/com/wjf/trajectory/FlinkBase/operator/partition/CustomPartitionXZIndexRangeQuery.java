@@ -13,9 +13,9 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.Counter;
-import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
+import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
 import org.apache.flink.util.Collector;
-import util.TestTool;
+import util.math.Tools;
 
 import java.util.*;
 
@@ -25,12 +25,11 @@ import java.util.*;
  * Boolean:是否包含
  * Long：查询处理时长
  */
-public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<Integer,Long>> {
-    private ValueState<TracingQueue> trajectoryState;
-    private ValueStateDescriptor<TracingQueue> trajectoryStateDescriptor;
+public class CustomPartitionXZIndexRangeQuery extends BroadcastProcessFunction<TracingPoint, Window, Tuple2<Integer,Long>> {
+    private Map<Long,TracingQueue> trajectoryState;
     private MapStateDescriptor<Window,Integer> windowStateDescriptor;
-    private MapState<Window,Integer> windowCounts;
-    private MapState<Window,Boolean> windowContain;
+    private Map<Window,Integer> windowCounts;
+    private Map<Window,Boolean> windowContain;
     private int query_size;
     private long timeWindowSize;
     private boolean increment;
@@ -38,7 +37,7 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
     private XZ2SFC xz2SFC;
     private transient Counter pointsCounter;
     private transient Counter calTimeCounter;
-    public PartitionXZIndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC) {
+    public CustomPartitionXZIndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
         this.increment = increment;
@@ -49,33 +48,27 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
     @Override
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
-        trajectoryStateDescriptor= new ValueStateDescriptor<>(
-                "trajectory",
-                TypeInformation.of(new TypeHint<TracingQueue>() {
-                })
-        );
-        trajectoryState = getRuntimeContext().getState(trajectoryStateDescriptor);
+        trajectoryState = new HashMap<>();
         MapStateDescriptor<Window,Integer> windowRangeTrajectoryDescriptor = new MapStateDescriptor<Window,Integer>(
                 "WindowRangeTrajectory",
                 TypeInformation.of(new TypeHint<Window>() {
                 }),
                 BasicTypeInfo.INT_TYPE_INFO
         );
-        windowCounts = getRuntimeContext().getMapState(windowRangeTrajectoryDescriptor);
+        windowCounts = new HashMap<>();
         MapStateDescriptor<Window,Boolean> windowContainDescriptor = new MapStateDescriptor<>(
                 "windowContainDescriptor",
                 TypeInformation.of(new TypeHint<Window>() {
                 }),
                 BasicTypeInfo.BOOLEAN_TYPE_INFO
         );
-        windowContain = getRuntimeContext().getMapState(windowContainDescriptor);
+        windowContain = new HashMap<>();
         windowStateDescriptor = new MapStateDescriptor<>(
                 "windowState",
                 TypeInformation.of(new TypeHint<Window>() {
                 }),
                 BasicTypeInfo.INT_TYPE_INFO
         );
-        String taskNameWithSubtasks = getRuntimeContext().getTaskNameWithSubtasks();
         this.pointsCounter = getRuntimeContext()
                 .getMetricGroup()
                 .addGroup("CustomPartition")
@@ -86,15 +79,33 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
                 .counter("CalTimeCounter");
     }
 
+
+    public static boolean isPointInsidePolygon(TracingPoint point, List<WindowPoint> polygon) {
+        int intersectCount = 0;
+        for (int i = 0; i < polygon.size(); i++) {
+            WindowPoint p1 = polygon.get(i);
+            WindowPoint p2 = polygon.get((i + 1) % polygon.size());
+
+            // 检查水平射线是否与边相交
+            if (((p1.getY() > point.y) != (p2.getY()> point.y)) &&
+                    (point.x < (p2.getX() - p1.getX()) * (point.y - p1.getY()) / (p2.getY() - p1.getY()) + p1.getX())) {
+                intersectCount++;
+            }
+        }
+
+        // 奇数次相交意味着点在多边形内
+        return (intersectCount % 2 == 1);
+    }
+
     @Override
-    public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Tuple2<Integer,Long>>.ReadOnlyContext ctx, Collector<Tuple2<Integer,Long>> out) throws Exception {
-        TracingQueue trajectory = trajectoryState.value();
+    public void processElement(TracingPoint point, BroadcastProcessFunction<TracingPoint, Window, Tuple2<Integer, Long>>.ReadOnlyContext ctx, Collector<Tuple2<Integer, Long>> out) throws Exception {
+        TracingQueue trajectory = trajectoryState.get(point.getId());
         if(trajectory == null) {
             trajectory = new TracingQueue(timeWindowSize);
             trajectory.updateId(point.id);
         }
         trajectory.EnCircularQueue(point);
-        trajectoryState.update(trajectory);
+        trajectoryState.put(trajectory.id,trajectory);
         if(trajectory.queueArray.size() < query_size){
             return;
         }
@@ -109,7 +120,7 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
         long index = xz2SFC.index(xMin, yMin, xMax, yMax, true);
         for(Map.Entry<Window,Integer> windowIntegerEntry:windows.immutableEntries()) {
             Window window = windowIntegerEntry.getKey();
-            if(windowCounts.contains(window)&&windowCounts.get(window) >= windowIntegerEntry.getValue()){
+            if(windowCounts.containsKey(window)&&windowCounts.get(window) >= windowIntegerEntry.getValue()){
                 continue;
             }
             if (!windowIndexRangeMap.containsKey(window)){
@@ -118,9 +129,9 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
                 List<IndexRange> ranges = xz2SFC.ranges(windowList, Optional.empty());
                 windowIndexRangeMap.put(window,ranges);
             }
-            long startTime = TestTool.currentMicrosecond();
+            long startTime = Tools.currentMicrosecond();
             int count = 0;
-            if(windowCounts.contains(window)) {
+            if(windowCounts.containsKey(window)) {
                 count = windowCounts.get(window);
             }
             count++;
@@ -128,7 +139,7 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
             windowCounts.put(window,count);
             boolean contain = false;
             boolean preContain = false;
-            if(windowContain.contains(window)){
+            if(windowContain.containsKey(window)){
                 preContain = windowContain.get(window);
             }
             // 执行轨迹范围查询
@@ -174,7 +185,7 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
                 }
             }
             windowContain.put(window,contain);
-            long endTime = TestTool.currentMicrosecond();
+            long endTime = Tools.currentMicrosecond();
             this.pointsCounter.inc();
             this.calTimeCounter.inc(endTime-startTime);
             out.collect(Tuple2.of(getRuntimeContext().getIndexOfThisSubtask(),endTime-startTime));
@@ -182,25 +193,8 @@ public class PartitionXZIndexRangeQuery extends KeyedBroadcastProcessFunction<Lo
     }
 
     @Override
-    public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window,Tuple2<Integer,Long>>.Context ctx, Collector<Tuple2<Integer,Long>> out) throws Exception {
+    public void processBroadcastElement(Window window, BroadcastProcessFunction<TracingPoint, Window, Tuple2<Integer, Long>>.Context ctx, Collector<Tuple2<Integer, Long>> out) throws Exception {
         BroadcastState<Window, Integer> broadcastState = ctx.getBroadcastState(windowStateDescriptor);
         broadcastState.put(window,10);
-    }
-
-    public static boolean isPointInsidePolygon(TracingPoint point, List<WindowPoint> polygon) {
-        int intersectCount = 0;
-        for (int i = 0; i < polygon.size(); i++) {
-            WindowPoint p1 = polygon.get(i);
-            WindowPoint p2 = polygon.get((i + 1) % polygon.size());
-
-            // 检查水平射线是否与边相交
-            if (((p1.getY() > point.y) != (p2.getY()> point.y)) &&
-                    (point.x < (p2.getX() - p1.getX()) * (point.y - p1.getY()) / (p2.getY() - p1.getY()) + p1.getX())) {
-                intersectCount++;
-            }
-        }
-
-        // 奇数次相交意味着点在多边形内
-        return (intersectCount % 2 == 1);
     }
 }
