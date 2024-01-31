@@ -1,4 +1,4 @@
-package com.wjf.trajectory.common.Partition;
+package com.wjf.trajectory.common.partition;
 
 import com.wjf.trajectory.common.entity.QueryPair;
 import org.apache.flink.api.java.functions.KeySelector;

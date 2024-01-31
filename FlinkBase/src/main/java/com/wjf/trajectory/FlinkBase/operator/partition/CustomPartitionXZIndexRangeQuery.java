@@ -28,7 +28,7 @@ import java.util.*;
 public class CustomPartitionXZIndexRangeQuery extends BroadcastProcessFunction<TracingPoint, Window, Tuple2<Integer,Long>> {
     private Map<Long,TracingQueue> trajectoryState;
     private MapStateDescriptor<Window,Integer> windowStateDescriptor;
-    private Map<Window,Integer> windowCounts;
+    private Map<Window,Map<Long,Integer>> windowCounts;
     private Map<Window,Boolean> windowContain;
     private int query_size;
     private long timeWindowSize;
@@ -56,12 +56,6 @@ public class CustomPartitionXZIndexRangeQuery extends BroadcastProcessFunction<T
                 BasicTypeInfo.INT_TYPE_INFO
         );
         windowCounts = new HashMap<>();
-        MapStateDescriptor<Window,Boolean> windowContainDescriptor = new MapStateDescriptor<>(
-                "windowContainDescriptor",
-                TypeInformation.of(new TypeHint<Window>() {
-                }),
-                BasicTypeInfo.BOOLEAN_TYPE_INFO
-        );
         windowContain = new HashMap<>();
         windowStateDescriptor = new MapStateDescriptor<>(
                 "windowState",
@@ -120,7 +114,7 @@ public class CustomPartitionXZIndexRangeQuery extends BroadcastProcessFunction<T
         long index = xz2SFC.index(xMin, yMin, xMax, yMax, true);
         for(Map.Entry<Window,Integer> windowIntegerEntry:windows.immutableEntries()) {
             Window window = windowIntegerEntry.getKey();
-            if(windowCounts.containsKey(window)&&windowCounts.get(window) >= windowIntegerEntry.getValue()){
+            if(windowCounts.containsKey(window)&&windowCounts.get(window).getOrDefault(point.getId(),0) >= windowIntegerEntry.getValue()){
                 continue;
             }
             if (!windowIndexRangeMap.containsKey(window)){
@@ -129,14 +123,17 @@ public class CustomPartitionXZIndexRangeQuery extends BroadcastProcessFunction<T
                 List<IndexRange> ranges = xz2SFC.ranges(windowList, Optional.empty());
                 windowIndexRangeMap.put(window,ranges);
             }
-            long startTime = Tools.currentMicrosecond();
-            int count = 0;
-            if(windowCounts.containsKey(window)) {
-                count = windowCounts.get(window);
+            Map<Long,Integer> trajectoryWindowCount;
+            if(windowCounts.containsKey(window)){
+                trajectoryWindowCount = windowCounts.get(window);
+            } else {
+                trajectoryWindowCount = new HashMap<>();
             }
+            long startTime = Tools.currentMicrosecond();
+            int count = trajectoryWindowCount.getOrDefault(point.getId(),0);
             count++;
-
-            windowCounts.put(window,count);
+            trajectoryWindowCount.put(point.getId(),count);
+            windowCounts.put(window,trajectoryWindowCount);
             boolean contain = false;
             boolean preContain = false;
             if(windowContain.containsKey(window)){

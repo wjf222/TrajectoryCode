@@ -44,8 +44,8 @@ public class CustomPartitionTDriveIndexSpatialRange {
         timeWindowSize = ParamHelper.getTimeWindowSize();
         indexType = ParamHelper.getIndexType();
         dataSize = ParamHelper.getDataSize();
-//        host = ParamHelper.getJobManagerHost();
-//        port = ParamHelper.getJobManagerPort();
+        host = ParamHelper.getJobManagerHost();
+        port = ParamHelper.getJobManagerPort();
         int range_measure_op = ParamHelper.getRangeMeasure();
         switch (range_measure_op) {
             case 1:
@@ -102,7 +102,7 @@ public class CustomPartitionTDriveIndexSpatialRange {
                 .readTextFile(dataPath)
                 // 分发轨迹流到不同节点
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
-                .process(new Dataloader(host,port))
+                .process(new PartitionDataloader(host,port))
                 .name("轨迹数据文件读入");
         SingleOutputStreamOperator<Tuple2<Integer,Long>> rangeQueryPairStream = pointStream
                 .partitionCustom(new CustomPartitioner<>(),new CustomKeySelector())

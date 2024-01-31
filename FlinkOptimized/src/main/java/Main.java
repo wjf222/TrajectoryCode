@@ -1,4 +1,4 @@
-import com.wjf.trajectory.common.Partition.QueryPairKeySelector;
+import com.wjf.trajectory.common.partition.QueryPairKeySelector;
 import com.wjf.trajectory.common.entity.QueryInfo;
 import com.wjf.trajectory.common.entity.QueryPair;
 import com.wjf.trajectory.common.entity.QueryTraInfo;
@@ -12,7 +12,6 @@ import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.OutputTag;
-import service.*;
 import com.wjf.trajectory.common.service.similarity.DTW;
 import com.wjf.trajectory.common.service.similarity.EDR;
 import com.wjf.trajectory.common.service.similarity.ERP;

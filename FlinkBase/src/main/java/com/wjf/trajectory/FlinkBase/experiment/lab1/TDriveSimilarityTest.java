@@ -1,6 +1,6 @@
 package com.wjf.trajectory.FlinkBase.experiment.lab1;
 
-import com.wjf.trajectory.common.Partition.QueryPairKeySelector;
+import com.wjf.trajectory.common.partition.QueryPairKeySelector;
 import com.wjf.trajectory.FlinkBase.operator.job.SimilarCalculator;
 import com.wjf.trajectory.FlinkBase.operator.similarity.*;
 import com.wjf.trajectory.common.entity.QueryInfo;

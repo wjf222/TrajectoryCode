@@ -1,4 +1,4 @@
-package com.wjf.trajectory.common.Partition;
+package com.wjf.trajectory.common.partition;
 
 import org.apache.flink.api.common.functions.Partitioner;
 

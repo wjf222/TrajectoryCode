@@ -11,8 +11,6 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -76,12 +74,12 @@ public class KeyPartitionTDriveIndexSpatialRange {
     }
 
     public static StreamExecutionEnvironment initEnv() {
-        Configuration configuration = new Configuration();
-        configuration.setInteger(RestOptions.PORT,8081);
+//        Configuration configuration = new Configuration();
+//        configuration.setInteger(RestOptions.PORT,8081);
 ////        configuration.set(RestOptions.ADDRESS,"127.0.0.1");
 ////        configuration.set(RestOptions.BIND_PORT,"8081");
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(configuration);
-//        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+//        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(configuration);
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         return env;
     }
 
@@ -103,10 +101,10 @@ public class KeyPartitionTDriveIndexSpatialRange {
                 .readTextFile(dataPath)
                 // 分发轨迹流到不同节点
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
-                .process(new Dataloader(host,port))
+                .flatMap(new OriginDataloader())
                 .name("轨迹数据文件读入");
         SingleOutputStreamOperator<Tuple2<Integer,Long>> rangeQueryPairStream = pointStream
-                .partitionCustom(new CustomPartitioner<>(),new CustomKeySelector())
+                .keyBy(point -> point.id)
                 .connect(queryWindowStream)
                 .process(rangeMeasure)
                 .name("PartitionRangeQuery");

@@ -21,13 +21,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Dataloader extends KeyedProcessFunction<Long,String,TracingPoint> {
+public class PartitionDataloader extends KeyedProcessFunction<Long,String,TracingPoint> {
 
     private int count = 1;
     private int numberOfParallelSubtasks;
     private Map<Long,List<Long>> slotTrajectory;
     private Map<Long,Long> trajectoryShardKey;
-    public Dataloader(){
+    public PartitionDataloader(){
         trajectoryShardKey = new HashMap<>();
         slotTrajectory = new HashMap<>();
     }
@@ -78,8 +78,8 @@ public class Dataloader extends KeyedProcessFunction<Long,String,TracingPoint> {
         final long total_count_avg = Tools.getMean(countList.stream().map(integerLongTuple2 -> integerLongTuple2.f1).collect(Collectors.toList()));
         final long sd_time = Tools.getStandardDeviation(timeList.stream().map(integerLongTuple2 -> integerLongTuple2.f1).collect(Collectors.toList()));
         final long sd_count = Tools.getStandardDeviation(countList.stream().map(integerLongTuple2 -> integerLongTuple2.f1).collect(Collectors.toList()));
-        List<Tuple2<Integer,Double>> sdMeanTimeDouble = timeList.stream().map(tuple2 -> Tuple2.of(tuple2.f0,Math.abs((double)(tuple2.f1-total_time_avg)/(double) sd_time))).collect(Collectors.toList());
-        List<Tuple2<Integer,Double>> sdMeanCountDouble = countList.stream().map(tuple2 ->Tuple2.of(tuple2.f0,Math.abs((double)(tuple2.f1-total_count_avg)/(double) sd_count))).collect(Collectors.toList());
+        List<Tuple2<Integer,Double>> sdMeanTimeDouble = timeList.stream().map(tuple2 -> Tuple2.of(tuple2.f0,(double)(tuple2.f1-total_time_avg)/(double) sd_time)).collect(Collectors.toList());
+        List<Tuple2<Integer,Double>> sdMeanCountDouble = countList.stream().map(tuple2 ->Tuple2.of(tuple2.f0,(double)(tuple2.f1-total_count_avg)/(double) sd_count)).collect(Collectors.toList());
         sdMeanTimeDouble.sort(Comparator.comparing(o -> o.f1));
         sdMeanCountDouble.sort(Comparator.comparing(o -> o.f1));
         if(sdMeanCountDouble.get(sdMeanTimeDouble.size()-1).f1>1){
@@ -92,7 +92,7 @@ public class Dataloader extends KeyedProcessFunction<Long,String,TracingPoint> {
     private String host;
     private String port;
     private String vertexId;
-    public Dataloader(String host, String port) throws IOException {
+    public PartitionDataloader(String host, String port) throws IOException {
         this.host = host;
         this.port = port;
         trajectoryShardKey = new HashMap<>();
