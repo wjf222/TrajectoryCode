@@ -5,6 +5,8 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ResultToFileSinker extends RichSinkFunction<QueryPair> {
     public String sinkDir;
@@ -25,16 +27,18 @@ public class ResultToFileSinker extends RichSinkFunction<QueryPair> {
     @Override
     public void invoke(QueryPair queryPair, Context context) throws Exception {
         super.invoke(queryPair, context);
-        System.out.printf("SimiResult： %s\n",queryPair.toString());
+//        System.out.printf("SimiResult： %s\n",queryPair.toString());
 
         //写入文件
-        String filePath = sinkDir + queryPair.queryTra.id + ".txt";
+        String filePath = sinkDir + queryPair.getQueryTraId() + ".txt";
         File file = new File(filePath);
         if (!file.exists()) file.createNewFile();
-        FileWriter writer = new FileWriter(file);
-        writer.write(queryPair.toString());
-        writer.flush();
-        writer.close();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file,true))) {
+            writer.write(queryPair.toString());
+            writer.newLine();
+            writer.write("---"); // 用分隔符隔开不同的列表
+            writer.newLine();
+        }
     }
 
     @Override
@@ -49,39 +53,26 @@ public class ResultToFileSinker extends RichSinkFunction<QueryPair> {
         int validCnt = 0;
         long startTimestamp = Long.MAX_VALUE;
         long endTimestamp = 0;
-        int avgTime = 0;
+        long totalTime = 0;
 
         File sinkDirFile = new File(sinkDir);
         for (File sinkFile : sinkDirFile.listFiles()) {
 
             if (sinkFile.getName().contains("0_aggregate.txt")) continue;
             cnt++;
-
-            FileInputStream sinkIS = new FileInputStream(sinkFile);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(sinkIS));
-            String line = reader.readLine();
-            if (line == null || line.equals("")) continue;
-            String[] strs = line.split(",");
-            if (strs.length <= 1) return;
-
-            //queryId=%d,similar=%d(total=%d),start=%d,end=%d,time(ms)=%d
-            startTimestamp = Math.min(startTimestamp, Long.parseLong( strs[2].split("=")[1]) );
-            endTimestamp = Math.max(endTimestamp, Long.parseLong( strs[3].split("=")[1])) ;
-            long singleTime = Long.parseLong( strs[4].split("=")[1] );
-            if (singleTime >= 0) {
-                validCnt++;
-                avgTime += singleTime;
+            List<Long> mergedList = readListsFromFile(sinkFile.getPath());
+            if(mergedList.size() != 0) {
+                // 结果去重
+                for(long time:mergedList){
+                    totalTime = totalTime+time;
+                }
             }
-
-            sinkIS.close();
-            reader.close();
         }
-
-        if (validCnt > 0) avgTime /= validCnt;
-
+        long avgTime = 0;
+        if (cnt > 0) avgTime = totalTime/cnt;
         aggWriter.write(String.format(
                 "[AGGREGATE]total=%d(valid=%d),total_time(ms)=%d(start=%d,end=%d),avg_time(ms)=%d\n",
-                cnt, validCnt, endTimestamp - startTimestamp, startTimestamp, endTimestamp, avgTime
+                cnt, validCnt, totalTime, startTimestamp, endTimestamp, avgTime
         ));
         aggWriter.flush();
         aggWriter.close();
@@ -98,5 +89,26 @@ public class ResultToFileSinker extends RichSinkFunction<QueryPair> {
         } else {
             file.delete();
         }
+    }
+    public static List<Long> readListsFromFile(String filename) {
+        List<Long> mergedList = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.equals("---")) {
+                    continue; // 跳过分隔符行
+                }
+                String[] strs = line.split(",");
+                if(strs.length < 5){
+                    continue;
+                }
+                Long cost = Long.parseLong( strs[4].split("=")[1]);
+                mergedList.add(cost);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return mergedList;
     }
 }

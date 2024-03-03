@@ -14,7 +14,7 @@ public class InERP implements Similarity {
     private TracingPoint gap;
 
     @Override
-    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory) {
+    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory,int step) {
         Deque<TracingPoint> first = firstTrajectory.queueArray;
         Deque<TracingPoint> second = queryTrajectory.queueArray;
         TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);

@@ -30,11 +30,15 @@ public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long,
     private MapState<Window,Boolean> windowContain;
     private int query_size;
     private long timeWindowSize;
+    private long step;
     private boolean increment;
-    public RangeQueryPairGenerator(int query_size, long timeWindowSize,boolean increment) {
+    private long continuousQueryNum;
+    public RangeQueryPairGenerator(int query_size, long timeWindowSize,boolean increment,long step,long continuousQueryNum) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
         this.increment = increment;
+        this.step = step;
+        this.continuousQueryNum = continuousQueryNum;
     }
 
     @Override
@@ -72,12 +76,12 @@ public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long,
     public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long>.ReadOnlyContext ctx, Collector<Long> out) throws Exception {
         TracingQueue trajectory = trajectoryState.value();
         if(trajectory == null) {
-            trajectory = new TracingQueue(timeWindowSize);
+            trajectory = new TracingQueue(timeWindowSize,step);
             trajectory.updateId(point.id);
         }
         trajectory.EnCircularQueue(point);
         trajectoryState.update(trajectory);
-        if(trajectory.queueArray.size() < query_size){
+        if(trajectory.queueArray.size() < timeWindowSize){
             return;
         }
         ReadOnlyBroadcastState<Window, Integer> windows = ctx.getBroadcastState(windowStateDescriptor);
@@ -91,7 +95,7 @@ public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long,
             RangeQueryPair rangeQueryPair = new RangeQueryPair();
 
 
-            rangeQueryPair.setStartTimestamp(System.currentTimeMillis());
+            rangeQueryPair.setStartTimestamp(System.nanoTime());
             int count = 0;
             if(windowCounts.contains(window)) {
                 count = windowCounts.get(window);
@@ -120,14 +124,19 @@ public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long,
                         }
                     }
                 } else {
-                    if(preContain||isPointInsidePolygon(trajectory.queueArray.getLast(), window.getPointList())){
-                        contain = true;
+                    TracingPoint[] tracingPoints = trajectory.queueArray.toArray(new TracingPoint[0]);
+                    for(int i = 0; i < step;i++) {
+                        int index = trajectory.queueArray.size()-(int)step-1;
+                        TracingPoint tracingPoint = tracingPoints[index];
+                        if (preContain || isPointInsidePolygon(tracingPoint, window.getPointList())) {
+                            contain = true;
+                        }
                     }
                 }
             }
             windowContain.put(window,contain);
 
-            rangeQueryPair.setEndTimestamp(System.currentTimeMillis());
+            rangeQueryPair.setEndTimestamp(System.nanoTime());
             rangeQueryPair.setContain(contain);
             out.collect(rangeQueryPair.getEndTimestamp()-rangeQueryPair.getStartTimestamp());
         }
@@ -136,7 +145,7 @@ public class RangeQueryPairGenerator extends KeyedBroadcastProcessFunction<Long,
     @Override
     public void processBroadcastElement(Window window, KeyedBroadcastProcessFunction<Long, TracingPoint, Window,Long>.Context ctx, Collector<Long> out) throws Exception {
         BroadcastState<Window, Integer> broadcastState = ctx.getBroadcastState(windowStateDescriptor);
-        broadcastState.put(window,10);
+        broadcastState.put(window, (int) continuousQueryNum);
     }
 
     public static boolean isPointInsidePolygon(TracingPoint point, List<WindowPoint> polygon) {

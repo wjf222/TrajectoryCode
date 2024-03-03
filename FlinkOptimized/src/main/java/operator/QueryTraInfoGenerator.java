@@ -37,18 +37,18 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
         traState.update(tra);
         if(tra.id != -1) {
             tra = SerializationUtils.clone(tra);
-            QueryTraInfo queryTraInfo = new QueryTraInfo(tra, queryInfoValueState.value());
-            out.collect(queryTraInfo);
+            if(tra.queueArray.size() == timeWindow) {
+                QueryTraInfo queryTraInfo = new QueryTraInfo(tra, queryInfoValueState.value());
+                out.collect(queryTraInfo);
+            }
         }
     }
 
     @Override
     public void processElement2(QueryInfo info, KeyedCoProcessFunction<Long, TracingPoint, QueryInfo, QueryTraInfo>.Context ctx, Collector<QueryTraInfo> out) throws Exception {
         TracingQueue tra = traState.value();
-        if (tra.id == -1) {
-            tra.updateId(info.queryTraId);
-            queryInfoValueState.update(info);
-            System.out.println("invalid query");
-        }
+        tra.updateId(info.queryTraId);
+        traState.update(tra);
+        queryInfoValueState.update(info);
     }
 }

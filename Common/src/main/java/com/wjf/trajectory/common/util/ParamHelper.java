@@ -38,6 +38,13 @@ public class ParamHelper {
     public static long getTimeWindowSize() {
         return paramTool.getLong("time_window");
     }
+    public static long getTimeStep() {
+        return paramTool.getLong("time_step");
+    }
+
+    public static int getExpiration() {
+        return paramTool.getInt("expiration_time");
+    }
 
     public static int getDistMeasure() {
         return paramTool.getInt("dist_measure");

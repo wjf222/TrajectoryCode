@@ -14,7 +14,7 @@ import java.util.Deque;
 public class ClosestPairDistance implements Similarity {
     // 可以结合单调栈实现增量计算
     @Override
-    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory) {
+    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory,int step) {
         Deque<TracingPoint> first = firstTrajectory.queueArray;
         Deque<TracingPoint> second = queryTrajectory.queueArray;
         double ans = Integer.MAX_VALUE;

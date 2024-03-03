@@ -17,7 +17,7 @@ public class LCSS implements Similarity {
         this.delta = delta;
     }
     @Override
-    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory) {
+    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory,int step) {
         Deque<TracingPoint> first = firstTrajectory.queueArray;
         Deque<TracingPoint> second = queryTrajectory.queueArray;
         int la = first.size();

@@ -8,6 +8,7 @@ import java.io.Serializable;
 public class QueryPair implements Serializable {
     public TracingQueue queryTra;
     public TracingQueue anotherTra;
+    private long queryTraId;
     public double threshold;
 
     public double similarityDistance = Double.MAX_VALUE;
@@ -39,6 +40,6 @@ public class QueryPair implements Serializable {
     @Override
     public String toString() {
         long time = endTimestamp - startTimestamp;
-        return String.format("queryId=%d,similar=%d(total=%d),start=%d,end=%d,time(ms)=%d\n", queryTra.id, numSimilarTra, numTotalTra, startTimestamp, endTimestamp, time);
+        return String.format("queryId=%d,similar=%d(total=%d),start=%d,end=%d,time(ms)=%d\n", queryTraId, numSimilarTra, numTotalTra, startTimestamp, endTimestamp, time);
     }
 }

@@ -22,6 +22,7 @@ public class TracingQueue implements Serializable {
     int front;
     int rear;
     long maxQueueSize;
+    long step;
     private Segment segment = new TimeSegment();
     private double xMin = Double.MAX_VALUE;
     private double xMax = Double.MIN_VALUE;
@@ -39,6 +40,13 @@ public class TracingQueue implements Serializable {
         this.front = 0;
         this.rear = 0;
     }
+    public TracingQueue(long maxSize,long step) {
+        this.maxQueueSize = maxSize;
+        this.queueArray = new ArrayDeque<>();
+        this.front = 0;
+        this.rear = 0;
+        this.step = step;
+    }
 
     /**
      * 添加元素
@@ -48,12 +56,27 @@ public class TracingQueue implements Serializable {
     public boolean EnCircularQueue(TracingPoint point){
         // 添加上限设置
         while (queueArray.size() >= maxQueueSize) {
-            queueArray.pollFirst();
+            for(int i = 0; i < step;i++) {
+                queueArray.pollFirst();
+            }
         }
         updateMBR(point);
         return queueArray.offerLast(point);
     }
 
+    /**
+     * 添加元素
+     * @param point 待添加点
+     * @return 元素位置
+     */
+    public boolean EnCircularQueueWithOutStep(TracingPoint point){
+        // 添加上限设置
+        while (queueArray.size() >= maxQueueSize) {
+                queueArray.pollFirst();
+        }
+        updateMBR(point);
+        return queueArray.offerLast(point);
+    }
     private void updateMBR(TracingPoint point) {
         if(point.getX() < xMin) {
             xMin = point.getX();

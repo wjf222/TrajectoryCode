@@ -25,13 +25,17 @@ public class TDriveSpatialRange {
     public static int query_size;
     public static long timeWindowSize;
     public static boolean isIncrement;
+    private static long step;
+    public static int continuousQueryNum;
     public static void main(String[] args) throws Exception {
         ParamHelper.initFromArgs(args);
         sinkDir = ParamHelper.getSinkDir();
         dataPath = ParamHelper.getDataPath();
         queryPath = ParamHelper.getQueryPath();
         query_size = ParamHelper.getQuerySize();
+        continuousQueryNum = ParamHelper.getContinuousQueryNum();
         timeWindowSize = ParamHelper.getTimeWindowSize();
+        step = ParamHelper.getTimeStep();
         int range_measure_op = ParamHelper.getRangeMeasure();
         switch (range_measure_op) {
             case 1:
@@ -80,7 +84,7 @@ public class TDriveSpatialRange {
         SingleOutputStreamOperator<Long> rangeQueryPairStream = pointStream
                 .keyBy(point ->point.id)
                 .connect(queryWindowStream)
-                .process(new RangeQueryPairGenerator(query_size,timeWindowSize,isIncrement))
+                .process(new RangeQueryPairGenerator(query_size,timeWindowSize,isIncrement,step,continuousQueryNum))
                 .name("生成范围查询");
         rangeQueryPairStream.addSink(new RangeResultSink(sinkDir));
         env.execute(String.format("TrajectoryCode %s Range Query", measure));

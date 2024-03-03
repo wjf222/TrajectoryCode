@@ -16,20 +16,22 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
     public long timeWindow;
     public int continuousQueryNum;
     public int query_size;
+    private long step;
     // 轨迹状态
     private ValueState<TracingQueue> traState;
     private ValueState<QueryInfo> queryInfoValueState;
     private ValueState<Integer> queryNum;
-    public  QueryTraInfoGenerator(long timeWindow,int continuousQueryNum,int query_size) {
+    public  QueryTraInfoGenerator(long timeWindow,int continuousQueryNum,int query_size,long step) {
         this.timeWindow = timeWindow;
         this.continuousQueryNum = continuousQueryNum;
         this.query_size = query_size;
+        this.step = step;
     }
     @Override
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
         traState = getRuntimeContext()
-                .getState(new ValueStateDescriptor<TracingQueue>("traState",TracingQueue.class,new TracingQueue(timeWindow)));
+                .getState(new ValueStateDescriptor<TracingQueue>("traState",TracingQueue.class,new TracingQueue(timeWindow,step)));
         queryInfoValueState = getRuntimeContext()
                 .getState(new ValueStateDescriptor<QueryInfo>("queryInfoValueState",QueryInfo.class,new QueryInfo()));
         queryNum = getRuntimeContext().getState(new ValueStateDescriptor<Integer>("queryNum",Integer.class,new Integer(0)));
@@ -38,16 +40,17 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
     @Override
     public void processElement1(TracingPoint value, KeyedCoProcessFunction<Long, TracingPoint, QueryInfo, QueryTraInfo>.Context ctx, Collector<QueryTraInfo> out) throws Exception {
         TracingQueue tra = traState.value();
-        tra.EnCircularQueue(value);
+        tra.EnCircularQueueWithOutStep(value);
         tra.id = tra.id == -1 ? value.id:tra.id;
         traState.update(tra);
         long queryInfoId = queryInfoValueState.value().queryTraId;
-        int queryNumAccumulator = queryNum.value();
-        if(queryInfoId != -1 && queryNumAccumulator < this.continuousQueryNum && tra.queueArray.size() > query_size  ) {
+        if(queryInfoId != -1&&queryNum.value() == 0) {
             tra = SerializationUtils.clone(tra);
-            QueryTraInfo queryTraInfo = new QueryTraInfo(tra, queryInfoValueState.value());
-            out.collect(queryTraInfo);
-            queryNum.update(queryNumAccumulator+1);
+            if(tra.queueArray.size() == timeWindow) {
+                QueryTraInfo queryTraInfo = new QueryTraInfo(tra, queryInfoValueState.value());
+                out.collect(queryTraInfo);
+                queryNum.update(1);
+            }
         }
     }
 
@@ -58,11 +61,5 @@ public class QueryTraInfoGenerator extends KeyedCoProcessFunction<Long, TracingP
         tra.updateId(info.queryTraId);
         traState.update(tra);
         queryInfoValueState.update(info);
-        queryNum.update(1);
-        // 如果查询轨迹已经初始化完成
-        if(!tra.queueArray.isEmpty() && tra.queueArray.size() > query_size) {
-            QueryTraInfo queryTraInfo = new QueryTraInfo(tra, info);
-            out.collect(queryTraInfo);
-        }
     }
 }

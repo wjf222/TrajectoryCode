@@ -15,11 +15,14 @@ public class SimilarCalculator extends KeyedProcessFunction<Tuple2<Long, Long>, 
     }
     @Override
     public void processElement(QueryPair pair, KeyedProcessFunction<Tuple2<Long, Long>, QueryPair, QueryPair>.Context ctx, Collector<QueryPair> out) throws Exception {
+        pair.setStartTimestamp(System.nanoTime());
         TracingQueue queryTra = pair.queryTra;
         TracingQueue anotherTra = pair.anotherTra;
         boolean identity = queryTra.id == anotherTra.id;
-        pair.similarityDistance = identity?0.0:incrementSimilarity.compute(anotherTra,queryTra);
+        pair.similarityDistance = identity?0.0:incrementSimilarity.compute(anotherTra,queryTra,0);
         if (!identity && pair.similarityDistance <= pair.threshold) pair.numSimilarTra++;
+        pair.setEndTimestamp(System.nanoTime());
+
         out.collect(pair);
     }
 }

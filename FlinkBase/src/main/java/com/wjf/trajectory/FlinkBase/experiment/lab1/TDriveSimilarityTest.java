@@ -1,22 +1,21 @@
 package com.wjf.trajectory.FlinkBase.experiment.lab1;
 
-import com.wjf.trajectory.common.partition.QueryPairKeySelector;
-import com.wjf.trajectory.FlinkBase.operator.job.SimilarCalculator;
 import com.wjf.trajectory.FlinkBase.operator.similarity.*;
 import com.wjf.trajectory.common.entity.QueryInfo;
 import com.wjf.trajectory.common.entity.QueryPair;
 import com.wjf.trajectory.common.entity.QueryTraInfo;
 import com.wjf.trajectory.common.entity.TracingPoint;
+import com.wjf.trajectory.common.service.Similarity;
 import com.wjf.trajectory.common.service.similarity.*;
+import com.wjf.trajectory.common.util.ParamHelper;
+import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.co.CoMapFunction;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.util.OutputTag;
-import com.wjf.trajectory.common.service.Similarity;
-import com.wjf.trajectory.common.util.ParamHelper;
 
 public class TDriveSimilarityTest {
     public static String dataPath;
@@ -32,6 +31,8 @@ public class TDriveSimilarityTest {
     public static String sinkDir;
     public static long timeWindowSize;
     public static int query_size;
+    private static long step;
+    private static int expiration;
     public static void main(String[] args) throws Exception {
         ParamHelper.initFromArgs(args);
         sinkDir = ParamHelper.getSinkDir();
@@ -46,6 +47,8 @@ public class TDriveSimilarityTest {
         delayReduceTime = ParamHelper.getDelayReduceTime();
         timeWindowSize = ParamHelper.getTimeWindowSize();
         query_size = ParamHelper.getQuerySize();
+        step = ParamHelper.getTimeStep();
+        expiration = ParamHelper.getExpiration();
         int dist_measure_op = ParamHelper.getDistMeasure();
         switch (dist_measure_op) {
             case 1:
@@ -53,20 +56,23 @@ public class TDriveSimilarityTest {
             case 2:
                 distMeasure = new LCSS(lcssThr, lcssDelta); break;
             case 3:
-                distMeasure = new EDR(edrThr); break;
+                distMeasure = new ClosestPairDistance(); break;
             case 4:
+                distMeasure = new EDR(edrThr); break;
+            case 5:
                 distMeasure = new ERP(erpGap); break;
             case 11:
                 distMeasure = new InDTW();break;
             case 12:
                 distMeasure = new InLCSS();break;
+            case 13:
+                distMeasure = new InClosestPairDistance();break;
             default:
                 throw new RuntimeException("No Such Similarity Method");
         }
         // 默认时间语义
         final StreamExecutionEnvironment env = initEnv();
         new TDriveSimilarityTest().apply(env);
-
     }
 
     public static StreamExecutionEnvironment initEnv() {
@@ -76,6 +82,12 @@ public class TDriveSimilarityTest {
     }
 
     public void apply(StreamExecutionEnvironment env) throws Exception {
+        MapStateDescriptor<QueryTraInfo,Integer> windowMapStateDescriptor = new MapStateDescriptor<>(
+                "windowState",
+                TypeInformation.of(new TypeHint<QueryTraInfo>() {
+                }),
+                BasicTypeInfo.INT_TYPE_INFO
+        );
         // 读取query 字符串
         SingleOutputStreamOperator<QueryInfo> queryInfoStream = env
                 .readTextFile(queryPath)
@@ -90,64 +102,17 @@ public class TDriveSimilarityTest {
                 .flatMap(new Dataloader())
                 .name("轨迹数据文件读入");
         // 两流合并获取查询内容
-        SingleOutputStreamOperator<QueryTraInfo> queryTraInfoStream = pointStream.connect(queryInfoStream)
+        BroadcastStream<QueryTraInfo> queryTraInfoStream = pointStream.connect(queryInfoStream)
                 .keyBy(point -> point.id,info -> info.queryTraId)
-                .process(new QueryTraInfoGenerator(timeWindowSize,continuousQueryNum,query_size))
-                .name("两流合并获取查询内容");
-        // 结合Point,生成计算对象
-        SingleOutputStreamOperator<QueryTraInfo> broadcastQueryTraInfoStream = queryTraInfoStream
-                .keyBy(queryTraInfo -> queryTraInfo.info.queryTraId)
-                .flatMap(new QueryTraInfoBroadcaster(dataSize))
-                .name("广播数据");
-        SingleOutputStreamOperator<QueryPair> queryPairSingleOutputStreamOperator = broadcastQueryTraInfoStream.connect(pointStream)
-                .keyBy(queryTraInfo -> queryTraInfo.anotherTraId, point -> point.id)
-                .process(new QueryPairGenerator(timeWindowSize))
-                .name("广播数据结合点信息");
-        // 开始时间戳
-        queryPairSingleOutputStreamOperator = queryPairSingleOutputStreamOperator
-                .map(pair -> {
-                    pair.startTimestamp = System.currentTimeMillis();
-                    return pair;
-                })
-                .name("开始时间戳");
-        // 相似度计算
-        SingleOutputStreamOperator<QueryPair> similarOutputStream = queryPairSingleOutputStreamOperator
-                .keyBy(new QueryPairKeySelector())
-                .process(new SimilarCalculator(distMeasure))
-                .name("相似度计算");
-        // 结束时间戳
-        queryPairSingleOutputStreamOperator = similarOutputStream
-                .map(pair -> {
-                    pair.endTimestamp = System.currentTimeMillis();
-                    return pair;
-                })
-                .name("结束时间戳");
-        // 统计时间戳
-        final OutputTag<QueryPair> lateReduceQueryPair = new OutputTag<QueryPair>("lateReduceQueryPair") {
-        };
-        // 生成计算结果
-        SingleOutputStreamOperator<QueryPair> reduceQueryPairStream = queryPairSingleOutputStreamOperator
-                .keyBy(pair -> pair.queryTra.id)
-                .window(TumblingProcessingTimeWindows.of(Time.milliseconds(delayReduceTime)))
-                .sideOutputLateData(lateReduceQueryPair)
-                .reduce(new ResultReducer());
-        SingleOutputStreamOperator<QueryPair> resultQueryPairStream = reduceQueryPairStream.connect(reduceQueryPairStream.getSideOutput(lateReduceQueryPair))
-                .keyBy(pair -> pair.queryTra.id, pair -> pair.queryTra.id)
-                .map(new CoMapFunction<QueryPair, QueryPair, QueryPair>() {
-                    @Override
-                    public QueryPair map1(QueryPair value) throws Exception {
-                        return value;
-                    }
-
-                    @Override
-                    public QueryPair map2(QueryPair value) throws Exception {
-                        return value;
-                    }
-                })
-                .keyBy(pair -> pair.queryTra.id)
-                .reduce(new ResultReducer());
+                .process(new QueryTraInfoGenerator(timeWindowSize,continuousQueryNum,query_size,step))
+                .broadcast(windowMapStateDescriptor);
+        SingleOutputStreamOperator<QueryPair> queryPairSingleOutputStreamOperator = pointStream
+                .keyBy(point -> point.id)
+                .connect(queryTraInfoStream)
+                .process(new QueryPairGenerator(timeWindowSize,continuousQueryNum,step,distMeasure,expiration))
+                .name("广播数据结合点信息相似度计算");
         //写入文件
-        resultQueryPairStream.addSink(new ResultToFileSinker(sinkDir));
+        queryPairSingleOutputStreamOperator.addSink(new ResultToFileSinker(sinkDir));
         env.execute("TrajectoryCode Flink Base Test");
     }
 }

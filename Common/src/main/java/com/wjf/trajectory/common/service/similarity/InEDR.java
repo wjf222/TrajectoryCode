@@ -14,7 +14,7 @@ public class InEDR implements Similarity {
         lastResult = new double[length+1];
     }
     @Override
-    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory) {
+    public double compute(TracingQueue firstTrajectory, TracingQueue queryTrajectory,int step) {
         Deque<TracingPoint> first = firstTrajectory.queueArray;
         Deque<TracingPoint> second = queryTrajectory.queueArray;
         TracingPoint[] firstTrace = first.toArray(new TracingPoint[0]);

@@ -9,7 +9,8 @@ import java.util.List;
 
 public class RangeResultSink extends RichSinkFunction<Long> {
     public String sinkDir;
-
+    int index = 1;
+    int max = 10;
     public RangeResultSink(String sinkDir) {
         this.sinkDir = sinkDir;
     }
@@ -26,7 +27,8 @@ public class RangeResultSink extends RichSinkFunction<Long> {
     @Override
     public void invoke(Long result, Context context) throws Exception {
         super.invoke(result, context);
-        String fileName = String.format("%s.txt","TDriveSpatialRange");
+        index++;
+        String fileName = String.format("%s-%d.txt","TDriveSpatialRange",index%max);
         //写入文件
         String filePath = sinkDir + fileName;
         File file = new File(filePath);
