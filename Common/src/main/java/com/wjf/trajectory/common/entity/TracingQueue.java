@@ -28,6 +28,18 @@ public class TracingQueue implements Serializable {
     private double xMax = Double.MIN_VALUE;
     private double yMin = Double.MAX_VALUE;
     private double yMax = Double.MIN_VALUE;
+//    private double historyXmin = Double.MAX_VALUE;
+//    private double historyxMax = Double.MIN_VALUE;
+//    private double historyyMin = Double.MAX_VALUE;
+//    private double historyyMax = Double.MIN_VALUE;
+    private int[] a;
+    private int[] b;
+    private int[] c;
+    private int[] d;
+    private int pointNum=0;
+    private boolean out = false;
+    int rate = 2;
+    public int updateNum=0;
     public TracingQueue(){
         this.maxQueueSize = 10;
         this.queueArray = new ArrayDeque<>();
@@ -46,6 +58,10 @@ public class TracingQueue implements Serializable {
         this.front = 0;
         this.rear = 0;
         this.step = step;
+        a = new int[100];
+        b = new int[100];
+        c = new int[100];
+        d = new int[100];
     }
 
     /**
@@ -53,15 +69,84 @@ public class TracingQueue implements Serializable {
      * @param point 待添加点
      * @return 元素位置
      */
-    public boolean EnCircularQueue(TracingPoint point){
+    public int EnCircularQueue(TracingPoint point){
         // 添加上限设置
         while (queueArray.size() >= maxQueueSize) {
             for(int i = 0; i < step;i++) {
                 queueArray.pollFirst();
             }
         }
+        double midX = xMin + (xMax-xMin)/2;
+        double midY = yMin+(yMax-yMin)/2;
+        int curA = point.x < midX&&point.y<midY?1:0;
+        int curB = point.x > midX&&point.y<midY?1:0;
+        int curC = point.x < midX&&point.y>midY?1:0;
+        int curD = point.x > midX&&point.y>midY?1:0;
+        pointNum++;
+
+        int xx=100;
+        int prePoint = pointNum+100-1;
+        int prePointA = a[prePoint%xx];
+        int prePointB = b[prePoint%xx];
+        int prePointC = c[prePoint%xx];
+        int prePointD = d[prePoint%xx];
+        a[pointNum%xx] = prePointA+curA;
+        b[pointNum%xx] = prePointB+curB;
+        c[pointNum%xx] = prePointC+curC;
+        d[pointNum%xx] = prePointD+curD;
+        int ret = 0;
+        if(pointNum>xx&&pointNum%rate==0){
+            int preA = a[(pointNum+rate)%xx];
+            int preB = b[(pointNum+rate)%xx];
+            int preC = c[(pointNum+rate)%xx];
+            int preD = d[(pointNum+rate)%xx];
+            int restA = a[pointNum%xx]-preA;
+            int restB = b[pointNum%xx]-preB;
+            int restC = c[pointNum%xx]-preC;
+            int restD = d[pointNum%xx]-preD;
+            if(restA==0&&restB==0&&restC==0&&restD!=0){
+                updateNum++;
+                ret=1;
+                reset();
+            }
+            else if(restA==0&&restB==0&&restC!=0&&restD==0){
+                updateNum++;
+                ret=1;
+                reset();
+            }
+            else if(restA==0&&restB!=0&&restC==0&&restD==0){
+                updateNum++;
+                ret=1;
+                reset();
+            }
+            else if(restA!=0&&restB==0&&restC==0&&restD==0){
+                updateNum++;
+                ret=1;
+                reset();
+            }
+            else if(restA==0&&restB==0&&restC!=0&&restD!=0){
+                updateNum++;
+                ret=1;
+                reset();
+            }
+            else if(restA==0&&restB!=0&&restC==0&&restD!=0){
+                updateNum++;
+                ret=1;
+                reset();
+            }
+        }
+//        if(point.x > historyxMax||point.y>historyyMax||point.x<historyXmin||point.y<historyyMin){
+//            this.out = true;
+//        }
         updateMBR(point);
-        return queueArray.offerLast(point);
+        return ret;
+    }
+    private void reset(){
+        a = new int[100];
+        b = new int[100];
+        c = new int[100];
+        d = new int[100];
+        pointNum = 0;
     }
 
     /**

@@ -29,6 +29,7 @@ public class TDriveIndexSpatialRange {
     private static  int indexType;
     private static String index;
     private static int dataSize;
+    private static long step;
     public static void main(String[] args) throws Exception {
         xz2SFC = new XZ2SFC((short) 10,116.0,116.8,39.5,40.3);
         ParamHelper.initFromArgs(args);
@@ -39,6 +40,7 @@ public class TDriveIndexSpatialRange {
         timeWindowSize = ParamHelper.getTimeWindowSize();
         indexType = ParamHelper.getIndexType();
         dataSize = ParamHelper.getDataSize();
+        step = ParamHelper.getTimeStep();
         int range_measure_op = ParamHelper.getRangeMeasure();
         switch (range_measure_op) {
             case 1:
@@ -56,11 +58,11 @@ public class TDriveIndexSpatialRange {
         switch (indexType){
             case 1:
                 index = "xz2SFC";
-                rangeMeasure = new XZIndexRangeQuery(query_size,timeWindowSize,isIncrement,xz2SFC);
+                rangeMeasure = new XZIndexRangeQuery(query_size,timeWindowSize,isIncrement,xz2SFC, (int) step);
                 break;
             case 2:
                 index = "rtree";
-                rangeMeasure = new RTreeStateIndexRangeQuery(query_size,timeWindowSize,dataSize);
+                rangeMeasure = new RTreeStateIndexRangeQuery(query_size,timeWindowSize,dataSize, (int) step);
                 break;
             default:
                 throw new RuntimeException("No Such index Method");

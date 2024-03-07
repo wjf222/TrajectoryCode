@@ -33,6 +33,9 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
     private boolean increment;
     private Map<Window,List<IndexRange>> windowIndexRangeMap;
     private XZ2SFC xz2SFC;
+    private int nums;
+    private int taskIndex;
+    private int step;
     public XZIndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
@@ -40,7 +43,15 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
         this.xz2SFC = xz2SFC;
         this.windowIndexRangeMap = new HashMap<>();
     }
-
+    public XZIndexRangeQuery(int query_size, long timeWindowSize, boolean increment, XZ2SFC xz2SFC,int step) {
+        this.query_size = query_size;
+        this.timeWindowSize = timeWindowSize;
+        this.increment = increment;
+        this.xz2SFC = xz2SFC;
+        this.windowIndexRangeMap = new HashMap<>();
+        this.step = step;
+        this.nums = 0;
+    }
     @Override
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
@@ -70,20 +81,23 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
                 }),
                 BasicTypeInfo.INT_TYPE_INFO
         );
+
     }
 
     @Override
     public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long>.ReadOnlyContext ctx, Collector<Long> out) throws Exception {
         TracingQueue trajectory = trajectoryState.value();
         if(trajectory == null) {
-            trajectory = new TracingQueue(timeWindowSize);
+            trajectory = new TracingQueue(timeWindowSize,step);
             trajectory.updateId(point.id);
         }
         trajectory.EnCircularQueue(point);
         trajectoryState.update(trajectory);
-        if(trajectory.queueArray.size() < query_size){
+
+        if(trajectory.queueArray.size() < timeWindowSize){
             return;
         }
+
         ReadOnlyBroadcastState<Window, Integer> windows = ctx.getBroadcastState(windowStateDescriptor);
 
         TracingPoint first = trajectory.queueArray.getFirst();
@@ -104,7 +118,7 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
                 List<IndexRange> ranges = xz2SFC.ranges(windowList, Optional.empty());
                 windowIndexRangeMap.put(window,ranges);
             }
-            long startTime = System.currentTimeMillis();
+            long startTime = System.nanoTime();
             int count = 0;
             if(windowCounts.contains(window)) {
                 count = windowCounts.get(window);
@@ -117,6 +131,7 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
             if(windowContain.contains(window)){
                 preContain = windowContain.get(window);
             }
+
             // 执行轨迹范围查询
             if(!increment) {
                 List<IndexRange> ranges = windowIndexRangeMap.get(window);
@@ -159,8 +174,9 @@ public class XZIndexRangeQuery extends KeyedBroadcastProcessFunction<Long, Traci
                     }
                 }
             }
+
             windowContain.put(window,contain);
-            long endTime = System.currentTimeMillis();
+            long endTime = System.nanoTime();
             out.collect(endTime-startTime);
         }
     }

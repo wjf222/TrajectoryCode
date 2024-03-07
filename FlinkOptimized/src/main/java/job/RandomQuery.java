@@ -7,9 +7,9 @@ import java.util.Random;
 
 public class RandomQuery {
     public static void main(String[] args) throws IOException {
-        int queryNum = 100;
-        int trajectoryIdMax = 182;
-        File aggFile = new File("geolife-sim-query_auto.txt");
+        int queryNum = 1000;
+        int trajectoryIdMax = 10366;
+        File aggFile = new File("T-Drive-sim-query_auto.txt");
         aggFile.createNewFile();
         FileWriter aggWriter = new FileWriter(aggFile);
         Random random = new Random();

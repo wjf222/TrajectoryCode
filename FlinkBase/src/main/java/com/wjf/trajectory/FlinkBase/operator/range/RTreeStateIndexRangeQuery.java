@@ -24,14 +24,18 @@ public class RTreeStateIndexRangeQuery extends KeyedBroadcastProcessFunction<Lon
     private int query_size;
     private long timeWindowSize;
     private MapState<Window,Integer> windowCounts;
-    private int parallelism ;
-    private int dataSize;
+    private int step;
+    private ValueState<Integer> queryNum;
     private ValueState<RTree<TracingPoint, Rectangle>> rtreeState;
     private ValueStateDescriptor<RTree<TracingPoint, Rectangle>> rTreeDescriptor;
     public RTreeStateIndexRangeQuery(int query_size, long timeWindowSize,int dataSize) {
         this.query_size = query_size;
         this.timeWindowSize = timeWindowSize;
-        this.dataSize = dataSize;
+    }
+    public RTreeStateIndexRangeQuery(int query_size, long timeWindowSize,int dataSize,int step) {
+        this.query_size = query_size;
+        this.timeWindowSize = timeWindowSize;
+        this.step = step;
     }
 
     @Override
@@ -70,40 +74,42 @@ public class RTreeStateIndexRangeQuery extends KeyedBroadcastProcessFunction<Lon
                 BasicTypeInfo.INT_TYPE_INFO
         );
         windowCounts = getRuntimeContext().getMapState(windowCountsDescriptor);
-        parallelism = getRuntimeContext().getNumberOfParallelSubtasks();
-        int nums = 1000*2/parallelism;
+        queryNum = getRuntimeContext().getState(new ValueStateDescriptor<Integer>("queryNum",Integer.class,new Integer(0)));
     }
 
     @Override
     public void processElement(TracingPoint point, KeyedBroadcastProcessFunction<Long, TracingPoint, Window, Long>.ReadOnlyContext ctx, Collector<Long> out) throws Exception {
         TracingQueue trajectory = trajectoryState.value();
         if(trajectory == null) {
-            trajectory = new TracingQueue(timeWindowSize);
+            trajectory = new TracingQueue(timeWindowSize,step);
             trajectory.updateId(point.id);
         }
         trajectory.EnCircularQueue(point);
         trajectoryState.update(trajectory);
-        long startTime = System.currentTimeMillis();
+        long startTime = System.nanoTime();
+        int value = queryNum.value();
+        value++;
+        queryNum.update(value);
         RTree<TracingPoint, Rectangle> rTree = rtreeState.value();
-        rTree = addTrajectoryPoint(rTree,point.getX(),point.getY(),point);
-        rtreeState.update(rTree);
-        if(rTree.size() > query_size){
-            ReadOnlyBroadcastState<Window, Integer> windows = ctx.getBroadcastState(windowStateDescriptor);
-            for (Map.Entry<Window, Integer> windowIntegerEntry : windows.immutableEntries()) {
-                Window window = windowIntegerEntry.getKey();
-                if(windowCounts.contains(window)){
-                    continue;
-                }
-                Rectangle queryRectangle = Geometries.rectangle(window.getXmin(), window.getYmin(), window.getXmax(), window.getYmax());
-                for(int i = 0; i < windowIntegerEntry.getValue();i++) {
-                    rangeQuery(rTree, queryRectangle);
-                }
-                windowCounts.put(window,windowIntegerEntry.getValue());
-            }
+        if(value % 5 == 0) {
+            rTree = addTrajectoryPoint(rTree, point.getX(), point.getY(), point);
+            rtreeState.update(rTree);
         }
-        long endTime = System.currentTimeMillis();
+        ReadOnlyBroadcastState<Window, Integer> windows = ctx.getBroadcastState(windowStateDescriptor);
+        for (Map.Entry<Window, Integer> windowIntegerEntry : windows.immutableEntries()) {
+            Window window = windowIntegerEntry.getKey();
+            if(windowCounts.contains(window)){
+                continue;
+            }
+
+            Rectangle queryRectangle = Geometries.rectangle(window.getXmin(), window.getYmin(), window.getXmax(), window.getYmax());
+            for(int i = 0; i < windowIntegerEntry.getValue();i++) {
+                rangeQuery(rTree, queryRectangle);
+            }
+            windowCounts.put(window,windowIntegerEntry.getValue());
+        }
+        long endTime = System.nanoTime();
         out.collect(endTime-startTime);
-//        System.out.printf("endTime:%d",endTime-startTime);
     }
 
     @Override
