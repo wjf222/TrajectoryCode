@@ -115,7 +115,7 @@ public class XZExtendTDriveIndexSimilarityTest {
                 .process(new XZExtendGenerator(timeWindowSize,continuousQueryNum,step,distMeasure,xz2SFC))
                 .name("广播数据结合点信息相似度计算");
         //写入文件
-        queryPairSingleOutputStreamOperator.addSink(new ResultToFileSinker(sinkDir));
+        queryPairSingleOutputStreamOperator.addSink(new SubtaskResultToFileSinker(sinkDir));
         env.execute("TrajectoryCode Flink Base Test");
     }
 }

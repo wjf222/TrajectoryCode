@@ -7,6 +7,6 @@ public class CustomKeySelector implements KeySelector<TracingPoint, Long> {
 
     @Override
     public Long getKey(TracingPoint point) throws Exception {
-        return point.getId();
+        return point.getShardKey();
     }
 }

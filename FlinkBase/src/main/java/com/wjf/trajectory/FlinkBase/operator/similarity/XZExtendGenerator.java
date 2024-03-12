@@ -8,6 +8,7 @@ import com.wjf.trajectory.common.indexs.IndexRange;
 import com.wjf.trajectory.common.indexs.commons.Window;
 import com.wjf.trajectory.common.indexs.z2.XZ2SFC;
 import com.wjf.trajectory.common.service.Similarity;
+import com.wjf.trajectory.common.util.math.Tools;
 import org.apache.flink.api.common.state.*;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -114,7 +115,8 @@ public class XZExtendGenerator extends KeyedBroadcastProcessFunction<Long, Traci
             }
             QueryPair pair = new QueryPair();
 
-            pair.setStartTimestamp(System.nanoTime());
+            long startTime = Tools.currentMicrosecond();
+            pair.setStartTimestamp(startTime*1000+getRuntimeContext().getIndexOfThisSubtask());
             int count = 0;
             if(windowCounts.contains(queryInfo)) {
                 count = windowCounts.get(queryInfo);
@@ -157,7 +159,8 @@ public class XZExtendGenerator extends KeyedBroadcastProcessFunction<Long, Traci
             }
             if (!identity && pair.similarityDistance <= pair.threshold) pair.numSimilarTra++;
             windowContain.put(queryInfo,contain);
-            pair.setEndTimestamp(System.nanoTime());
+            long endTime = Tools.currentMicrosecond();
+            pair.setEndTimestamp(endTime*1000);
             pair.setQueryTraId(queryTra.id);
             out.collect(pair);
         }

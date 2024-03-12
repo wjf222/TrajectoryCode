@@ -2,6 +2,7 @@ package com.wjf.trajectory.FlinkBase.experiment.lab3;
 
 import com.wjf.trajectory.FlinkBase.operator.partition.CustomKeySelector;
 import com.wjf.trajectory.FlinkBase.operator.partition.CustomPartitioner;
+import com.wjf.trajectory.FlinkBase.operator.partition.PartitionDataloader;
 import com.wjf.trajectory.FlinkBase.operator.similarity.*;
 import com.wjf.trajectory.common.entity.QueryInfo;
 import com.wjf.trajectory.common.entity.QueryPair;
@@ -15,6 +16,8 @@ import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -37,6 +40,8 @@ public class CustomePartitionXZTDriveIndexSimilarityTest {
     private static long step;
     private static int expiration;
     private static XZ2SFC xz2SFC;
+    private static String host;
+    private static String port;
     public static void main(String[] args) throws Exception {
         xz2SFC = new XZ2SFC((short) 10,116.0,116.8,39.5,40.3);
         ParamHelper.initFromArgs(args);
@@ -54,6 +59,8 @@ public class CustomePartitionXZTDriveIndexSimilarityTest {
         query_size = ParamHelper.getQuerySize();
         step = ParamHelper.getTimeStep();
         expiration = ParamHelper.getExpiration();
+        host = ParamHelper.getJobManagerHost();
+        port = ParamHelper.getJobManagerPort();
         int dist_measure_op = ParamHelper.getDistMeasure();
         switch (dist_measure_op) {
             case 1:
@@ -81,6 +88,11 @@ public class CustomePartitionXZTDriveIndexSimilarityTest {
     }
 
     public static StreamExecutionEnvironment initEnv() {
+//        Configuration configuration = new Configuration();
+//        configuration.setInteger(RestOptions.PORT,8081);
+//        configuration.set(RestOptions.ADDRESS,"127.0.0.1");
+//        configuration.set(RestOptions.BIND_PORT,"8081");
+//        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(configuration);
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
         return env;
@@ -104,7 +116,7 @@ public class CustomePartitionXZTDriveIndexSimilarityTest {
                 .readTextFile(dataPath)
                 // 分发轨迹流到不同节点
                 .keyBy(line -> Long.parseLong(line.split(",")[0]))
-                .flatMap(new Dataloader())
+                .process(new PartitionDataloader(host,port))
                 .name("轨迹数据文件读入");
         // 两流合并获取查询内容
         BroadcastStream<QueryTraInfo> queryTraInfoStream = pointStream.connect(queryInfoStream)
@@ -114,10 +126,10 @@ public class CustomePartitionXZTDriveIndexSimilarityTest {
         SingleOutputStreamOperator<QueryPair> queryPairSingleOutputStreamOperator = pointStream
                 .partitionCustom(new CustomPartitioner<>(),new CustomKeySelector())
                 .connect(queryTraInfoStream)
-                .process(new XZQueryPairGenerator(timeWindowSize,continuousQueryNum,step,distMeasure,xz2SFC))
+                .process(new XZPartitionQueryPairGenerator(timeWindowSize,continuousQueryNum,step,distMeasure,xz2SFC))
                 .name("广播数据结合点信息相似度计算");
         //写入文件
-        queryPairSingleOutputStreamOperator.addSink(new ResultToFileSinker(sinkDir));
+        queryPairSingleOutputStreamOperator.addSink(new SubtaskResultToFileSinker(sinkDir));
         env.execute("TrajectoryCode Flink Base Test");
     }
 }

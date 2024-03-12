@@ -74,7 +74,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.wjf.trajectory.FlinkBase.experiment.lab3.XZExtendTDriveIndexSimilarityTest</mainClass>
+                                    <mainClass>com.wjf.trajectory.FlinkBase.experiment.lab3.CustomPartitionTDriveIndexSpatialRange</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

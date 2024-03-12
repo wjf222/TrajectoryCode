@@ -80,7 +80,7 @@ public class PartitionRangeResultSink extends RichSinkFunction<Tuple2<Integer,Lo
             List<Long> timeList = new ArrayList<>();
             List<Long> countList = new ArrayList<>();
             for(int i = 0; i < list.size();i++) {
-                timeList.add(list.get(i).f0/1000);
+                timeList.add(list.get(i).f0/1000000000);
                 countList.add(list.get(i).f1);
             }
             total_time_avg = Tools.getMean(timeList);
