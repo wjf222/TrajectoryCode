@@ -94,7 +94,7 @@ public class TDriveSimilarityTest {
                 .keyBy(queryline -> 1)
                 .process(new QueryInfoLoader())
                 .name("查询字符串输入");
-        // 并行读取Point 流
+         // 并行读取Point 流
         SingleOutputStreamOperator<TracingPoint> pointStream = env
                 .readTextFile(dataPath)
                 // 分发轨迹流到不同节点
